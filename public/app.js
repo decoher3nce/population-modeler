@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "2";
+const DATA_VERSION = "3";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -16,11 +16,12 @@ const REFERENCE_BANDS = [
   { y0: 80,  y1: 200, color: "rgba(210, 84, 138, 0.13)", label: "80+ crisis" },
 ];
 
+// Numeric reference markers; no descriptive labels, since the bands are
+// generic (not tied to any specific country narrative).
 const REFERENCE_LINES = [
-  { y: 50, label: "50" },
-  { y: 65, label: "65 — France today" },
-  { y: 80, label: "80 — China 1970s" },
-  { y: 128, label: "128 — China 2100" },
+  { y: 50 },
+  { y: 65 },
+  { y: 80 },
 ];
 
 // State
@@ -199,7 +200,6 @@ function annotationsForBands() {
       borderColor: "rgba(255,255,255,0.18)",
       borderWidth: 1,
       borderDash: [3, 3],
-      label: { content: l.label, display: true, position: "end", backgroundColor: "rgba(0,0,0,0.55)", color: "#bbb", font: { size: 10 } },
     };
   });
   return ann;
@@ -594,6 +594,15 @@ function wireEvents() {
 
   document.querySelectorAll("button.preset").forEach((b) => {
     b.addEventListener("click", () => applyPreset(b.dataset.preset));
+  });
+
+  // Modal open buttons in the top nav
+  document.querySelectorAll("[data-open-dialog]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.openDialog;
+      const dlg = document.getElementById(id);
+      if (dlg && typeof dlg.showModal === "function") dlg.showModal();
+    });
   });
 
   document.getElementById("custom-load").addEventListener("click", loadCustomSeed);
