@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Population Modeler — Dependency Ratio Explorer</title>
+<meta name="description" content="Interactive dependency ratio model using UN World Population Prospects 2024 data." />
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E📊%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>Population Modeler</h1>
+    <p class="tagline">Dependency ratio over time. Real UN data plus your own scenarios.</p>
+  </div>
+  <nav class="topnav">
+    <a href="#about">About</a>
+    <a href="#methodology">Methodology</a>
+    <a href="#data-sources">Data sources</a>
+    <a href="https://github.com/decoher3nce/population-modeler" target="_blank" rel="noreferrer">GitHub</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="explainer">
+    <p>
+      The <strong>dependency ratio</strong> = (people aged 0–14 + 65+) ÷ (people aged 15–64) × 100.
+      It compresses a society's economic load-bearing capacity into one number. Below ~50 is healthy;
+      above ~80 is the red zone that triggered China's one-child policy in the 1970s.
+    </p>
+    <p class="muted">
+      Sources: <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer">UN World Population Prospects 2024</a>,
+      via <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer">Our World in Data</a>.
+      Inspired by Max Fisher's <em>How China blew up its own future</em>.
+    </p>
+  </section>
+
+  <section class="controls">
+    <div class="row">
+      <div class="control wide">
+        <label for="entity-search">Country / region / world</label>
+        <input id="entity-search" type="search" placeholder="Type to search…" autocomplete="off" />
+        <select id="entity-select" size="6"></select>
+        <div class="entity-actions">
+          <button id="add-entity" type="button">+ Add to chart</button>
+          <button id="clear-entities" type="button" class="ghost">Clear</button>
+        </div>
+        <div id="selected-entities" class="chips"></div>
+      </div>
+
+      <div class="control">
+        <label>Reference bands (Fisher's scale)</label>
+        <label class="check"><input type="checkbox" id="show-bands" checked /> Show 50/65/80/128 bands</label>
+        <label class="check"><input type="checkbox" id="split-young-old" /> Split young / old dependency</label>
+        <label class="check"><input type="checkbox" id="log-pop" /> Log scale (population)</label>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="scenario-block">
+      <div class="scenario-head">
+        <h2>Custom scenario</h2>
+        <p class="muted">Override TFR, life expectancy, and net migration. The model runs a cohort-component projection from 2023 forward and overlays it as a dashed line.</p>
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <label for="scenario-entity">Apply scenario to</label>
+          <select id="scenario-entity"></select>
+        </div>
+        <div class="control">
+          <label class="check"><input type="checkbox" id="scenario-on" /> Show custom scenario</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <label for="tfr-slider">Total fertility rate (children per woman) <span id="tfr-val" class="val">2.10</span></label>
+          <input id="tfr-slider" type="range" min="0.5" max="6.0" step="0.05" value="2.1" />
+          <div class="ticks"><span>0.5</span><span>replacement 2.1</span><span>6.0</span></div>
+        </div>
+        <div class="control">
+          <label for="e0-slider">Life expectancy at birth (years) <span id="e0-val" class="val">80</span></label>
+          <input id="e0-slider" type="range" min="50" max="95" step="0.5" value="80" />
+          <div class="ticks"><span>50</span><span>80</span><span>95</span></div>
+        </div>
+        <div class="control">
+          <label for="mig-slider">Net migration rate (per 1,000 / yr) <span id="mig-val" class="val">0</span></label>
+          <input id="mig-slider" type="range" min="-10" max="20" step="0.5" value="0" />
+          <div class="ticks"><span>−10 (loss)</span><span>0</span><span>+20 (high)</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <label for="asfr-pattern">Childbearing age pattern</label>
+          <select id="asfr-pattern">
+            <option value="early">Early peak (high-TFR pattern)</option>
+            <option value="mid" selected>Middle peak (typical middle-income)</option>
+            <option value="late">Late peak (developed)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="proj-end">Project until</label>
+          <select id="proj-end">
+            <option value="2050">2050</option>
+            <option value="2075">2075</option>
+            <option value="2100" selected>2100</option>
+            <option value="2150">2150</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Quick scenarios</label>
+          <div class="presets">
+            <button class="preset" data-preset="replacement">Replacement</button>
+            <button class="preset" data-preset="japan-trend">Japan-trend</button>
+            <button class="preset" data-preset="china-2100">China 2100</button>
+            <button class="preset" data-preset="immigration">+ Immigration</button>
+            <button class="preset" data-preset="reset">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <details class="custom-data">
+      <summary>Use your own data ▾</summary>
+      <p class="muted">
+        Paste or upload a CSV with two columns: <code>age_group,population</code>. Age groups in 5-year bins
+        starting at 0 (rows: <code>0_4, 5_9, …, 95_99, 100plus</code> — 21 rows). Population is in count of people.
+        The custom scenario sliders apply to your own seed.
+      </p>
+      <div class="row">
+        <div class="control">
+          <label for="custom-name">Label</label>
+          <input id="custom-name" type="text" value="My scenario" />
+        </div>
+        <div class="control">
+          <label for="custom-year">Seed year</label>
+          <input id="custom-year" type="number" min="1900" max="2100" value="2025" />
+        </div>
+        <div class="control">
+          <label for="custom-file">CSV file</label>
+          <input id="custom-file" type="file" accept=".csv,text/csv" />
+        </div>
+      </div>
+      <textarea id="custom-csv" rows="6" placeholder="age_group,population&#10;0_4,1000000&#10;5_9,950000&#10;…"></textarea>
+      <div class="entity-actions">
+        <button id="custom-load" type="button">Load custom seed</button>
+        <button id="custom-template" type="button" class="ghost">Insert template</button>
+      </div>
+      <p id="custom-msg" class="muted"></p>
+    </details>
+  </section>
+
+  <section class="charts">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Dependency ratio over time</h3>
+        <span class="muted">solid = UN medium variant • dashed = your custom scenario</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="dep-chart"></canvas>
+      </div>
+      <div class="legend-note">
+        <strong>Reference bands:</strong>
+        <span class="band-tag b-50">≤ 50 healthy</span>
+        <span class="band-tag b-65">50–65 strain</span>
+        <span class="band-tag b-80">65–80 decline</span>
+        <span class="band-tag b-128">80+ crisis</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Drivers (TFR & life expectancy)</h3>
+        <span class="muted">two slow-moving inputs that determine the trajectory</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="driver-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Population pyramid (2023 vs scenario end-year)</h3>
+        <span class="muted">applies to the scenario entity</span>
+      </div>
+      <div class="chart-host">
+        <canvas id="pyramid-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="about">
+    <h2>About</h2>
+    <p>
+      The dependency ratio is the most-cited single number in demography because it sits on top of two
+      slow-moving inputs — fertility 20 years ago and life expectancy — and both are observable today.
+      That makes the next few decades unusually predictable.
+    </p>
+    <p>
+      Max Fisher's video <em>How China blew up its own future</em> uses the dependency ratio as the
+      calibration spine for the entire China demography argument. The video quotes a rounded scale —
+      <strong>45 healthy, 55 fine, 60–65 national crisis, 70 national decline, 80 emergency,
+      ~128 unprecedented</strong> — and traces the one-child policy, the 1970s scientific purges that
+      let a missile scientist's bad projection drive policy, and the immigration lever that China
+      refuses to pull.
+    </p>
+    <p>
+      This page lets you explore that argument quantitatively: pick any country, region, or the world,
+      compare them, then run "what if" scenarios by overriding the three demographic levers.
+    </p>
+  </section>
+
+  <section id="methodology" class="methodology">
+    <h2>Methodology</h2>
+    <h3>Real-data baseline</h3>
+    <p>
+      Historical estimates 1950–2023 and projected medium-variant values 2024–2100 come from the
+      UN <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer">World Population
+      Prospects 2024</a>, distributed via
+      <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer">Our World in
+      Data</a>. We use the dependency ratio, total fertility rate, life expectancy at birth, and
+      population by broad and 5-year age groups directly. Net migration rate is derived as
+      (population growth rate) − (natural change rate).
+    </p>
+    <h3>Custom-scenario projection engine</h3>
+    <p>
+      The scenario engine is a deterministic single-sex cohort-component model in 5-year age groups
+      and 5-year time steps. Starting from the 2023 5-year age structure, each step:
+    </p>
+    <ol>
+      <li>Ages each cohort forward one bin, applying age-specific survival ratios interpolated to the chosen life expectancy.</li>
+      <li>Generates births = Σ (women in 5-year reproductive group × TFR × ASFR-share), with women assumed to be 49% of each cohort and shares from the chosen ASFR pattern (early/mid/late peak).</li>
+      <li>Survives newborns to ages 0–4 using a birth-survival ratio also indexed by life expectancy.</li>
+      <li>Adds net migrants = (total population × net-migration rate / 1000 × 5), distributed across age groups using a typical migrant age profile (peaks at 20–34).</li>
+    </ol>
+    <p>
+      Survival ratios and birth-survival are stored at six reference life expectancies
+      (50, 60, 70, 80, 85, 90) and linearly interpolated. Reference values are calibrated to a UN-style
+      abridged general-pattern model life table. The model is intentionally simple — it is for
+      "what would change if" scenario thinking, not for replacing UN demographic forecasts.
+    </p>
+    <h3>Limitations</h3>
+    <ul>
+      <li>No sex disaggregation: combined-sex with a fixed women-share (49%). Real fertility & mortality differ by sex.</li>
+      <li>No cohort effects beyond the standard age structure: e.g. fertility postponement effects on cohort completion are not modeled.</li>
+      <li>Migration is exogenous and uniform per-year; surges and selectivity by skill/age beyond the standard pattern are not modeled.</li>
+      <li>The standard ASFR pattern is one of three preset shapes; real countries have unique patterns.</li>
+    </ul>
+  </section>
+
+  <section id="data-sources" class="about">
+    <h2>Data sources</h2>
+    <p>
+      All real-data baselines come from the
+      <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer"><strong>United Nations World Population Prospects 2024</strong></a>
+      (UN Department of Economic and Social Affairs, Population Division), distributed in tidy form by
+      <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer"><strong>Our World in Data</strong></a>.
+      Specific OWID grapher slugs consumed by the build pipeline:
+    </p>
+    <ul>
+      <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-projected-to-2100" target="_blank" rel="noreferrer">age-dependency-ratio-projected-to-2100</a> — total dependency ratio, historical + medium-variant projection.</li>
+      <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-old" target="_blank" rel="noreferrer">age-dependency-ratio-old</a> — old-age dependency ratio.</li>
+      <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-young-of-working-age-population" target="_blank" rel="noreferrer">age-dependency-ratio-young-of-working-age-population</a> — youth dependency ratio.</li>
+      <li><a href="https://ourworldindata.org/grapher/fertility-rate-with-projections" target="_blank" rel="noreferrer">fertility-rate-with-projections</a> — total fertility rate, historical + projection.</li>
+      <li><a href="https://ourworldindata.org/grapher/life-expectancy" target="_blank" rel="noreferrer">life-expectancy</a> — life expectancy at birth.</li>
+      <li><a href="https://ourworldindata.org/grapher/population-young-working-elderly-with-projections" target="_blank" rel="noreferrer">population-young-working-elderly-with-projections</a> — population by broad age group.</li>
+      <li><a href="https://ourworldindata.org/grapher/population-by-five-year-age-group" target="_blank" rel="noreferrer">population-by-five-year-age-group</a> — 5-year age group structure (the projection seed).</li>
+      <li><a href="https://ourworldindata.org/grapher/population-unwpp" target="_blank" rel="noreferrer">population-unwpp</a> — total population.</li>
+      <li><a href="https://ourworldindata.org/grapher/population-growth-rate-with-and-without-migration" target="_blank" rel="noreferrer">population-growth-rate-with-and-without-migration</a> — derives net migration as growth − natural change.</li>
+    </ul>
+    <p>
+      The raw CSVs are kept in the repository under
+      <a href="https://github.com/decoher3nce/population-modeler/tree/main/raw-data" target="_blank" rel="noreferrer"><code>raw-data/</code></a>
+      and the build script that turns them into bundled JSON lives at
+      <a href="https://github.com/decoher3nce/population-modeler/blob/main/scripts/build-data.py" target="_blank" rel="noreferrer"><code>scripts/build-data.py</code></a>,
+      so anyone can rebuild the data pipeline end-to-end. The model framework is inspired by
+      Max Fisher's <a href="https://www.youtube.com/watch?v=AultJcNb90c" target="_blank" rel="noreferrer"><em>How China blew up its own future</em></a>.
+    </p>
+  </section>
+
+  <footer>
+    <p>
+      Data: <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer">UN WPP 2024</a> via
+      <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer">Our World in Data</a>.
+      Open source on <a href="https://github.com/decoher3nce/population-modeler" target="_blank" rel="noreferrer">GitHub</a>.
+    </p>
+  </footer>
+
+</main>
+
+<div id="loading" class="loading">Loading UN data…</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>

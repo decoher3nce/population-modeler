@@ -1,0 +1,9 @@
+.DS_Store
+*.log
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.idea/
+.vscode/
+.claude/launch.json

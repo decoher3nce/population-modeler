@@ -1,0 +1,30 @@
+# Render Blueprint — deploys the Population Modeler as a static site.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: population-modeler
+    runtime: static
+    staticPublishPath: ./public
+    buildCommand: ""
+    autoDeploy: true
+    pullRequestPreviewsEnabled: true
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /data/*
+        name: Cache-Control
+        value: public, max-age=86400
+      - path: /*.js
+        name: Cache-Control
+        value: public, max-age=3600
+      - path: /*.css
+        name: Cache-Control
+        value: public, max-age=3600
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
