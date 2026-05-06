@@ -15,12 +15,14 @@ services:
       - path: /*
         name: Referrer-Policy
         value: strict-origin-when-cross-origin
+      # Short-lived cache: keep deployments cheap to iterate on. Bump
+      # DATA_VERSION in app.js when bundled JSON changes to force re-fetch.
       - path: /data/*
         name: Cache-Control
-        value: public, max-age=86400
+        value: public, max-age=300, must-revalidate
       - path: /*.js
         name: Cache-Control
-        value: public, max-age=3600
+        value: public, max-age=300, must-revalidate
       - path: /*.css
         name: Cache-Control
-        value: public, max-age=3600
+        value: public, max-age=300, must-revalidate

@@ -1,5 +1,8 @@
 import { project, dependencyRatio, setStandards } from "./projection.js";
 
+// Build version — bumped to bust browser caches when bundled JSON changes.
+const DATA_VERSION = "2";
+
 // Distinct colour palette (10 series).
 const PALETTE = [
   "#58a6ff", "#f97583", "#3fb950", "#d29922", "#bc8cff",
@@ -43,7 +46,10 @@ const CUSTOM_ID = "__custom__";
 // ---------- data load ----------
 
 async function fetchJson(url) {
-  const r = await fetch(url, { cache: "force-cache" });
+  // The version query string forces re-fetch when DATA_VERSION is bumped, even if a
+  // stale 404 was cached from an earlier broken deploy.
+  const sep = url.includes("?") ? "&" : "?";
+  const r = await fetch(`${url}${sep}v=${DATA_VERSION}`, { cache: "no-cache" });
   if (!r.ok) throw new Error(`Failed to load ${url}: ${r.status}`);
   return r.json();
 }
