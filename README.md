@@ -23,20 +23,29 @@ shock events.
   (the world, all major regions, top 35 countries by population).
 - **Real UN data** — historical 1950–2023 estimates and projected medium-variant values
   through 2100 from UN World Population Prospects 2024, distributed via Our World in Data.
-- **Three live charts**: dependency ratio over time (with reference bands at 50 / 65 / 80),
-  driver inputs (TFR & life expectancy), and a population pyramid that projects forward
-  to your chosen end year.
+- **Three live charts**:
+  - *Dependency ratio over time* — with reference bands at 50 / 65 / 80 and a vertical
+    "Pyramid" marker tied to your projection end year.
+  - *Fertility & life expectancy over time* — the two slow-moving inputs that determine
+    the trajectory.
+  - *Population by age* — vertical age-distribution histogram with a **Bars / Line toggle**;
+    seed year (e.g. 2023) and scenario end year (e.g. 2100) shown side-by-side.
 - **Custom-scenario projection** — override TFR, life expectancy, net migration, sex ratio
   at birth, reproductive age max, retirement age threshold, and ASFR pattern. The
   cohort-component engine projects from the 2023 age structure forward and overlays a
-  dashed line on the dep-ratio chart and a coral bar on the pyramid.
+  dashed line on the dep-ratio chart, a coral series on the pyramid, and a one-line
+  description of the active scenario beneath the dep-ratio chart.
 - **One-shot shock events** — pandemic, war, asteroid, mass migration, annexation. Year +
   signed magnitude (−40 % loss to +40 % gain) + age-band targeting (all / working / young
-  / old). Migration is decoupled from the shock so an old-age-targeted event doesn't
-  cascade into working-age cohorts.
-- **38 quick-scenario presets** in 8 optgroups (today's countries, China demographic
+  / old). Migration is decoupled from the shock via a parallel unshocked baseline timeline,
+  so an old-age-targeted event doesn't bleed into working-age and youth cohorts.
+- **40 quick-scenario presets** in 8 optgroups (today's countries, China demographic
   transition, postwar booms & busts, wars & political shocks, disease & disasters,
   migration events, rapid transitions, speculative & theoretical).
+- **"Use latest values for {entity}" sync button** — snaps every slider to the scenario
+  entity's most recent UN values without searching for a matching preset.
+- **Hover tooltips** on every custom-scenario control, explaining what the lever does and
+  how it affects the model.
 - **Bring your own data** — paste or upload a 21-row 5-year-age-group CSV. The same
   scenario sliders apply to your seed.
 
@@ -57,17 +66,22 @@ Each preset auto-generates an explanation in a description box on the dep-ratio 
 
 ## Custom scenario levers
 
-| Lever | Default | Range | Affects |
-| --- | --- | --- | --- |
-| Total fertility rate | 1.62 (USA) | 0.5 – 12.0 | Births per 5-year step |
-| Life expectancy at birth | 79.3 | 20 – 200 | Survival ratios across all age bands |
-| Net migration | +4.0 / 1000 | −20 to +50 | Annual migrants, distributed by typical age profile |
-| Childbearing age pattern | Late peak | early / mid / late | Where in life births fall |
-| Reproductive age max | 49 | 49 – 70 | Upper end of fertile window |
-| Sex ratio at birth | 105 | 95 – 130 | Female share of births → replacement TFR |
-| Retirement age threshold | 65 | 50 – 95 | Working / old-age boundary in dep-ratio formula |
-| Project until | 2100 | 2050 / 2075 / 2100 | Last 5-year tick of the projection |
-| Shock event | off | year × ±40 % × target | One-shot population perturbation |
+| Lever | Default | Range | Step | Affects |
+| --- | --- | --- | --- | --- |
+| Total fertility rate | 1.62 (USA) | 0.5 – 12.0 | 0.05 | Births per 5-year step |
+| Life expectancy at birth | 79.3 | 20 – 200 | 0.5 | Survival ratios across all age bands |
+| Net migration | +4.0 / 1000 | −20 to +50 | 0.5 | Annual migrants, distributed by typical age profile |
+| Childbearing age pattern | Late peak | early / mid / late | — | Where in life births fall |
+| Reproductive age max | 49 | 49 – 69 | 5 | Upper end of fertile window |
+| Sex ratio at birth | 105 | 95 – 130 | 1 | Female share of births → replacement TFR |
+| Retirement age threshold | 65 | 50 – 95 | 5 | Working / old-age boundary in dep-ratio formula |
+| Project until | 2100 | 2050 / 2075 / 2100 | — | Last 5-year tick of the projection |
+| Shock event | off | year × ±40 % × target | — | One-shot population perturbation |
+
+The 5-year-step sliders (reproductive age, retirement age) are stepped to match the model's
+5-year age-group resolution — values between 5-year boundaries produce identical dep-ratio
+output, so the slider snaps to whole groups instead of giving the false impression of finer
+granularity.
 
 The Replacement-rate popup shows a live computed replacement TFR based on the current SRB
 and life-expectancy slider values (≈ 2.10 at canonical SRB 105 + e₀ 80; rises with sex
