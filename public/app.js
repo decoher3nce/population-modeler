@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "10";
+const DATA_VERSION = "11";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -407,7 +407,8 @@ function makeDepChart() {
           title: { display: true, text: "Year", color: "#8b949e" },
         },
         y: {
-          min: 20, max: 150,
+          min: 0,
+          suggestedMax: 150,
           ticks: { color: "#8b949e" },
           grid: { color: "#21262d" },
           title: { display: true, text: "Dependency ratio (per 100 working-age)", color: "#8b949e" },
@@ -704,13 +705,13 @@ function applyValuesToSliders({ tfr, e0, netMigPer1000, asfrPattern }) {
   const migEl = document.getElementById("mig-slider");
   const patEl = document.getElementById("asfr-pattern");
   if (tfr != null) {
-    const v = Math.max(0.5, Math.min(6.0, Math.round(tfr * 20) / 20));
+    const v = Math.max(0.5, Math.min(12.0, Math.round(tfr * 20) / 20));
     tfrEl.value = v;
     state.scenario.tfr = v;
     document.getElementById("tfr-val").textContent = v.toFixed(2);
   }
   if (e0 != null) {
-    const v = Math.max(20, Math.min(95, Math.round(e0 * 2) / 2));
+    const v = Math.max(20, Math.min(200, Math.round(e0 * 2) / 2));
     e0El.value = v;
     state.scenario.e0 = v;
     document.getElementById("e0-val").textContent = v.toFixed(1);

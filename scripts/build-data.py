@@ -315,12 +315,15 @@ def main():
         s = sum(v)
         asfr_patterns[k] = [x / s for x in v]
 
-    # Survival ratios by 5-year age group at four reference life expectancies.
+    # Survival ratios by 5-year age group at reference life expectancies.
     # Survival ratio s[a] = L[a+5] / L[a] from a model life table (UN-style abridged).
-    # These values derived from UN model life table "general" pattern, both sexes combined.
     # Index 0 = "0-4 surviving to 5-9", ..., index 19 = "95-99 surviving to 100+".
-    # Values calibrated to match the named e0; deliberately smooth.
-    surv_e0 = {
+    # Values 50–90 are calibrated to UN-style abridged "general" model life tables.
+    # Values 100–200 are smooth extrapolations: per-period mortality scales with
+    # (90 / e0) ** 1.5 from the e0=90 baseline, asymptotically approaching no-mortality
+    # at very high e0. The 100/120/150/200 anchors let the slider produce meaningful
+    # behaviour for what-if life-extension scenarios.
+    surv_e0_base = {
         50: [0.917, 0.985, 0.984, 0.978, 0.972, 0.965, 0.958, 0.949, 0.937, 0.920, 0.895, 0.860, 0.811, 0.747, 0.665, 0.561, 0.434, 0.295, 0.165, 0.072],
         60: [0.943, 0.991, 0.990, 0.985, 0.981, 0.975, 0.969, 0.961, 0.951, 0.937, 0.916, 0.886, 0.842, 0.781, 0.700, 0.594, 0.461, 0.314, 0.176, 0.077],
         70: [0.965, 0.995, 0.994, 0.991, 0.988, 0.984, 0.979, 0.973, 0.965, 0.953, 0.935, 0.908, 0.868, 0.811, 0.732, 0.626, 0.491, 0.337, 0.190, 0.083],
@@ -329,9 +332,25 @@ def main():
         90: [0.995, 0.999, 0.999, 0.999, 0.998, 0.998, 0.996, 0.994, 0.990, 0.984, 0.974, 0.957, 0.929, 0.882, 0.812, 0.712, 0.575, 0.408, 0.235, 0.106],
     }
 
+    def extrapolate_survival(base_90, target_e0):
+        """Scale per-period mortality by (90/e0)**1.5; cap survival just below 1.0."""
+        factor = (90.0 / target_e0) ** 1.5
+        result = []
+        for s in base_90:
+            m = 1.0 - s
+            new_m = max(min(m * factor, 0.999), 0.0)
+            result.append(round(1.0 - new_m, 4))
+        return result
+
+    surv_e0 = dict(surv_e0_base)
+    for target in (100, 120, 150, 200):
+        surv_e0[target] = extrapolate_survival(surv_e0_base[90], target)
+
     # Survival to age 0-4 from birth, by e0 (l_5 / l_0 essentially)
+    # Birth survival → 1.0 at high e0 (effectively no infant mortality).
     surv_birth = {
         50: 0.875, 60: 0.928, 70: 0.965, 80: 0.987, 85: 0.992, 90: 0.996,
+        100: 0.998, 120: 0.999, 150: 0.9995, 200: 0.9999,
     }
 
     # Net migration age distribution by 5-year group (length 21, peaks at young working ages)
