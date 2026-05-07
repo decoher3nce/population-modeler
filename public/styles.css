@@ -413,6 +413,26 @@ input[type="file"] { font-size: 12px; padding: 5px 4px; }
   color: var(--muted);
 }
 
+/* Positioned ticks: each <span> carries inline `left:X%` aligned to the slider
+   value, so labels sit under the actual value they name (TFR's `2.1` lands
+   ~14% across the track, not at the visual center of three evenly-spaced
+   labels). t-start / t-end anchor the first/last labels to the slider edges
+   so they don't visually overflow the track. */
+.ticks-positioned {
+  display: block;
+  position: relative;
+  height: 14px;
+  margin-top: 2px;
+}
+.ticks-positioned > span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.ticks-positioned > span.t-start { transform: translateX(0); }
+.ticks-positioned > span.t-end   { transform: translateX(-100%); }
+
 .entity-actions {
   display: flex;
   gap: 8px;

@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards, replacementTfr } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "16";
+const DATA_VERSION = "17";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
