@@ -311,15 +311,18 @@ def main():
     # children-per-woman quantity over whichever window is in play.
     asfr_patterns = {
         # high TFR / earlier peak (e.g. SSA pattern)
-        "early": [0.10, 0.22, 0.25, 0.20, 0.14, 0.07, 0.02, 0.005, 0.002, 0.001, 0.0005],
+        "early": [0.10, 0.22, 0.25, 0.20, 0.14, 0.07, 0.02, 0.04, 0.025, 0.012, 0.005],
         # middle pattern (most middle-income)
-        "mid":   [0.06, 0.18, 0.27, 0.24, 0.16, 0.07, 0.02, 0.005, 0.002, 0.001, 0.0005],
+        "mid":   [0.06, 0.18, 0.27, 0.24, 0.16, 0.07, 0.02, 0.04, 0.025, 0.012, 0.005],
         # later peak (developed, low TFR)
-        "late":  [0.02, 0.10, 0.25, 0.32, 0.22, 0.07, 0.02, 0.005, 0.002, 0.001, 0.0005],
+        "late":  [0.02, 0.10, 0.25, 0.32, 0.22, 0.07, 0.02, 0.04, 0.025, 0.012, 0.005],
     }
     # Normalise each pattern so the first 7 entries (15-49 biological default) sum to 1.
-    # Trailing entries are absolute (in the same fractions-of-TFR units), and the
-    # projection re-normalises against whatever slice is active.
+    # Trailing entries (50-69) carry larger speculative shares than biological reality so
+    # extending the reproductive window in the projection visibly redistributes births
+    # toward older mothers (artificial-wombs / menopause-delay scenarios). The projection
+    # re-normalises whichever slice is active so TFR remains a true children-per-woman
+    # quantity over the chosen window.
     for k, v in asfr_patterns.items():
         head_sum = sum(v[:7])
         asfr_patterns[k] = [x / head_sum for x in v]

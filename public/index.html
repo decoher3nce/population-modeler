@@ -141,8 +141,11 @@
       <details class="shock-panel" id="shock-panel">
         <summary>Population shock event (optional) ▾</summary>
         <p class="muted small">
-          Apply a one-time population reduction at a specific year — pandemic, war,
-          asteroid, etc. Acts as an instantaneous all-ages multiplier.
+          Apply a one-time population change at a specific year — pandemic, war,
+          asteroid, mass migration, annexation. Negative = loss; positive = gain.
+          Targeting it to a single age band is what actually moves the dependency
+          ratio (a uniform shock leaves the ratio unchanged because numerator and
+          denominator scale together).
         </p>
         <label class="check">
           <input type="checkbox" id="shock-on" /> Enable shock event
@@ -152,9 +155,18 @@
           <input id="shock-year" type="range" min="2025" max="2100" step="5" value="2030" />
         </div>
         <div class="control">
-          <label for="shock-fraction">Population lost <span id="shock-fraction-val" class="val">5%</span></label>
-          <input id="shock-fraction" type="range" min="1" max="40" step="1" value="5" />
-          <div class="ticks"><span>1%</span><span>20%</span><span>40%</span></div>
+          <label for="shock-fraction">Population change <span id="shock-fraction-val" class="val">−5%</span></label>
+          <input id="shock-fraction" type="range" min="-40" max="40" step="1" value="-5" />
+          <div class="ticks"><span>−40% (loss)</span><span>0</span><span>+40% (gain)</span></div>
+        </div>
+        <div class="control">
+          <label for="shock-target">Affects which age band</label>
+          <select id="shock-target">
+            <option value="all" selected>All ages</option>
+            <option value="working">Working-age (15–64)</option>
+            <option value="young">Young (0–14)</option>
+            <option value="old">Old-age (65+)</option>
+          </select>
         </div>
       </details>
     </section>

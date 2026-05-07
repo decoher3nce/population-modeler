@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards, replacementTfr } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "12";
+const DATA_VERSION = "13";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -672,28 +672,39 @@ const PRESETS = [
     values: { tfr: 1.60, e0: 130, netMigPer1000: 3, asfrPattern: "late",
               retirementAge: 90, reproAgeMax: 60 } },
 
-  // Phase 2: shock-event scenarios. Each pairs a one-shot population reduction
+  // Phase 2: shock-event scenarios. Each pairs a one-shot population change
   // with sustained background rates that reflect the post-event environment.
+  // Negative fraction = population gain (annexation, refugee absorption).
+  // The `target` field restricts the shock to a specific age band so it visibly
+  // moves the dependency ratio (uniform shocks leave it unchanged).
   { type: "values", id: "spec-pandemic", group: "Speculative & theoretical",
-    label: "Pandemic worse than COVID (5% loss, 2030)",
+    label: "Working-age pandemic (8% loss, 2030)",
     values: { tfr: 1.60, e0: 75, netMigPer1000: 1, asfrPattern: "late",
-              shock: { year: 2030, fraction: 0.05 } } },
+              shock: { year: 2030, fraction: 0.08, target: "working" } } },
   { type: "values", id: "spec-wwiii", group: "Speculative & theoretical",
-    label: "Major war / WWIII (8% loss, 2030)",
+    label: "Major war / WWIII (12% working-age loss, 2030)",
     values: { tfr: 1.40, e0: 72, netMigPer1000: 0, asfrPattern: "late",
-              shock: { year: 2030, fraction: 0.08 } } },
+              shock: { year: 2030, fraction: 0.12, target: "working" } } },
   { type: "values", id: "spec-nuclear", group: "Speculative & theoretical",
-    label: "Regional nuclear exchange (12% loss, 2035)",
+    label: "Regional nuclear exchange (12% all-age loss, 2035)",
     values: { tfr: 1.30, e0: 65, netMigPer1000: -2, asfrPattern: "mid",
-              shock: { year: 2035, fraction: 0.12 } } },
+              shock: { year: 2035, fraction: 0.12, target: "all" } } },
   { type: "values", id: "spec-bioweapon", group: "Speculative & theoretical",
-    label: "Bioweapon release (6% loss, 2030)",
+    label: "Bioweapon release (10% working-age loss, 2030)",
     values: { tfr: 1.40, e0: 70, netMigPer1000: 0, asfrPattern: "late",
-              shock: { year: 2030, fraction: 0.06 } } },
+              shock: { year: 2030, fraction: 0.10, target: "working" } } },
   { type: "values", id: "spec-asteroid", group: "Speculative & theoretical",
-    label: "Asteroid / supervolcano (25% loss, 2050)",
+    label: "Asteroid / supervolcano (25% all-age loss, 2050)",
     values: { tfr: 1.60, e0: 60, netMigPer1000: 0, asfrPattern: "mid",
-              shock: { year: 2050, fraction: 0.25 } } },
+              shock: { year: 2050, fraction: 0.25, target: "all" } } },
+  { type: "values", id: "spec-mass-migration", group: "Speculative & theoretical",
+    label: "Mass refugee absorption (+15% working-age, 2030)",
+    values: { tfr: 1.80, e0: 80, netMigPer1000: 5, asfrPattern: "late",
+              shock: { year: 2030, fraction: -0.15, target: "working" } } },
+  { type: "values", id: "spec-annexation", group: "Speculative & theoretical",
+    label: "Country annexation / merger (+25% all-age, 2030)",
+    values: { tfr: 1.80, e0: 80, netMigPer1000: 3, asfrPattern: "late",
+              shock: { year: 2030, fraction: -0.25, target: "all" } } },
 
   // Reset
   { type: "reset",  id: "reset", group: "—", label: "Reset to United States today" },
@@ -849,16 +860,20 @@ function applyValuesToSliders(values) {
     const onCb = document.getElementById("shock-on");
     const yEl = document.getElementById("shock-year");
     const fEl = document.getElementById("shock-fraction");
+    const tEl = document.getElementById("shock-target");
     const panel = document.getElementById("shock-panel");
     if (shock && shock.year != null && shock.fraction != null) {
       onCb.checked = true;
       const yClamped = Math.max(2025, Math.min(2150, Math.round(shock.year / 5) * 5));
-      const fPct = Math.max(1, Math.min(40, Math.round(shock.fraction * 100)));
+      const fPct = Math.max(-40, Math.min(40, Math.round(shock.fraction * 100)));
+      const target = shock.target || "all";
       yEl.value = yClamped;
       fEl.value = fPct;
+      tEl.value = target;
       document.getElementById("shock-year-val").textContent = `${yClamped}`;
-      document.getElementById("shock-fraction-val").textContent = `${fPct}%`;
-      state.scenario.shock = { year: yClamped, fraction: fPct / 100 };
+      document.getElementById("shock-fraction-val").textContent =
+        fPct >= 0 ? `+${fPct}%` : `${fPct}%`.replace("-", "−");
+      state.scenario.shock = { year: yClamped, fraction: fPct / 100, target };
       panel.open = true;
     } else {
       onCb.checked = false;
@@ -1054,6 +1069,7 @@ function wireEvents() {
   const shockOn = document.getElementById("shock-on");
   const shockYear = document.getElementById("shock-year");
   const shockFraction = document.getElementById("shock-fraction");
+  const shockTarget = document.getElementById("shock-target");
 
   function syncSliders() {
     state.scenario.tfr = parseFloat(tfr.value);
@@ -1072,11 +1088,14 @@ function wireEvents() {
     document.getElementById("retirement-val").textContent = `${state.scenario.retirementAge}`;
     // Shock event
     document.getElementById("shock-year-val").textContent = `${shockYear.value}`;
-    document.getElementById("shock-fraction-val").textContent = `${shockFraction.value}%`;
+    const fPct = parseInt(shockFraction.value, 10);
+    document.getElementById("shock-fraction-val").textContent =
+      fPct >= 0 ? `+${fPct}%` : `${fPct}%`.replace("-", "−");
     if (shockOn.checked) {
       state.scenario.shock = {
         year: parseInt(shockYear.value, 10),
-        fraction: parseInt(shockFraction.value, 10) / 100,
+        fraction: fPct / 100,
+        target: shockTarget.value,
       };
     } else {
       state.scenario.shock = null;
@@ -1088,10 +1107,11 @@ function wireEvents() {
     refreshReplacementDialog();
   }
   [tfr, e0, mig, pat, endYear, srb, reproMax, retirement,
-   shockOn, shockYear, shockFraction].forEach((el) =>
+   shockOn, shockYear, shockFraction, shockTarget].forEach((el) =>
     el.addEventListener("input", syncSliders)
   );
   shockOn.addEventListener("change", syncSliders);
+  shockTarget.addEventListener("change", syncSliders);
 
   document.getElementById("preset-select").addEventListener("change", (ev) => {
     const id = ev.target.value;

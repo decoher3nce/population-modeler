@@ -182,15 +182,35 @@ export function project(seedPop, seedYear, endYear, scenario) {
   const shock = scenario.shock;
   let shockApplied = false;
 
+  // Helper: does an age-group index belong to a shock target band?
+  // 'all'      → indices 0..20
+  // 'working'  → indices 3..12 (15-64)
+  // 'young'    → indices 0..2 (0-14)
+  // 'old'      → indices 13..20 (65+)
+  const inShockTarget = (idx, target) => {
+    if (!target || target === "all") return true;
+    if (target === "working") return idx >= 3 && idx <= 12;
+    if (target === "young") return idx <= 2;
+    if (target === "old") return idx >= 13;
+    return true;
+  };
+
   // Step in 5-year periods. Stop before overshooting endYear so the final
   // data point is the last 5-year step that lies on or before endYear
   // (e.g. with seedYear=2023 and endYear=2100, the last year is 2098, not 2103).
   while (year + 5 <= endYear) {
     // Apply one-shot shock at the start of the 5-year period that contains it.
+    // shock.fraction is signed: positive = loss (e.g. 0.10 = 10% loss),
+    // negative = gain (e.g. -0.20 = 20% population increase from migration/annexation).
+    // shock.target restricts the multiplier to a subset of age groups so age-skewed
+    // events (working-age pandemic, working-age refugee influx) actually move the
+    // dependency ratio rather than just scaling everyone uniformly.
     if (shock && !shockApplied && shock.year >= year && shock.year < year + 5) {
-      const fraction = Math.max(0, Math.min(0.5, shock.fraction || 0));
-      if (fraction > 0) {
-        pop = pop.map((p) => p * (1 - fraction));
+      const fraction = Math.max(-0.4, Math.min(0.4, shock.fraction || 0));
+      const factor = 1 - fraction;
+      const target = shock.target || "all";
+      if (fraction !== 0) {
+        pop = pop.map((p, i) => (inShockTarget(i, target) ? p * factor : p));
       }
       shockApplied = true;
     }
