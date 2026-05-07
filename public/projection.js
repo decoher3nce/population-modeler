@@ -68,7 +68,14 @@ function femaleShareFromSrb(srb) {
  */
 export function step5(
   pop,
-  { tfr, e0, netMigPer1000, asfrPattern: asfrName, srb, reproAgeMax }
+  {
+    tfr, e0, netMigPer1000, asfrPattern: asfrName, srb, reproAgeMax,
+    // Optional override: total population used to compute the absolute number
+    // of migrants in this 5-year step. Defaults to sum(pop). Used by project()
+    // to feed the *unshocked* baseline total so a one-shot shock event doesn't
+    // cascade into reduced migration in subsequent decades.
+    migrationBase,
+  }
 ) {
   const surv = interpolateSurvival(e0);
   const survBirth = interpolateBirthSurvival(e0);
@@ -118,9 +125,12 @@ export function step5(
   next[0] += births5y * survBirth;
   deaths += births5y * (1 - survBirth);
 
-  // Migration: net migrants over 5 years = pop_total × rate/1000 × 5
+  // Migration: net migrants over 5 years = base × rate/1000 × 5.
+  // Base defaults to the current population total. Callers (project()) can
+  // override with the unshocked baseline so shocks don't drag migration down.
   const popTotal = pop.reduce((a, b) => a + b, 0);
-  const netMigrants5y = popTotal * (netMigPer1000 / 1000) * 5;
+  const baseForMig = migrationBase != null ? migrationBase : popTotal;
+  const netMigrants5y = baseForMig * (netMigPer1000 / 1000) * 5;
   if (netMigrants5y !== 0) {
     const dist = standards.mig_age_dist;
     for (let i = 0; i < NUM_GROUPS; i++) {
@@ -173,6 +183,14 @@ export function dependencyRatio(pop, retirementAge = 65) {
 export function project(seedPop, seedYear, endYear, scenario) {
   const out = [];
   let pop = seedPop.slice();
+  // Parallel unshocked baseline. This timeline never receives the shock, and
+  // its total population is used as the migration base for the actual `pop`
+  // timeline so a one-shot shock doesn't bleed into subsequent decades through
+  // the migration channel. Without this, a 40% old-age shock at 2030 visibly
+  // reduces the 2073 0-14 and working-age cohorts by ~0.5% — non-zero, and
+  // surprising for users who expect an old-age-targeted shock to leave young
+  // and working-age cohorts untouched.
+  let popBaseline = seedPop.slice();
   let year = seedYear;
   const retirementAge = scenario.retirementAge ?? 65;
 
@@ -220,11 +238,13 @@ export function project(seedPop, seedYear, endYear, scenario) {
       const factor = 1 + fraction;
       const target = shock.target || "all";
       if (fraction !== 0) {
+        // Shock applies to the actual `pop` only; popBaseline keeps running
+        // its undisturbed timeline so it can drive migration without cascade.
         pop = pop.map((p, i) => (inShockTarget(i, target) ? p * factor : p));
       }
       shockApplied = true;
     }
-    const inputs = {
+    const baseInputs = {
       tfr: typeof scenario.tfr === "function" ? scenario.tfr(year) : scenario.tfr,
       e0: typeof scenario.e0 === "function" ? scenario.e0(year) : scenario.e0,
       netMigPer1000: typeof scenario.netMigPer1000 === "function"
@@ -234,7 +254,13 @@ export function project(seedPop, seedYear, endYear, scenario) {
       srb: scenario.srb,
       reproAgeMax: scenario.reproAgeMax,
     };
-    const r = step5(pop, inputs);
+    // Step the unshocked baseline first; its total feeds migrationBase for the
+    // actual timeline so migration doesn't shrink when shocks reduce pop.
+    const baselineTotal = popBaseline.reduce((a, b) => a + b, 0);
+    const rb = step5(popBaseline, baseInputs);
+    popBaseline = rb.pop;
+
+    const r = step5(pop, { ...baseInputs, migrationBase: baselineTotal });
     pop = r.pop;
     year += 5;
     out.push({ year, pop: pop.slice(), ...dependencyRatio(pop, retirementAge) });
