@@ -70,12 +70,18 @@
       </p>
 
       <div class="control">
-        <label for="scenario-entity">Apply scenario to</label>
+        <label for="scenario-entity">
+          Apply scenario to
+          <span class="info-icon" data-tip="The entity whose 2023 age structure seeds the custom-scenario projection. The dashed line on the dep-ratio chart and the right bar on the population pyramid both come from this entity.">i</span>
+        </label>
         <select id="scenario-entity"></select>
       </div>
 
       <div class="control">
-        <label for="preset-select">Quick scenarios</label>
+        <label for="preset-select">
+          Quick scenarios
+          <span class="info-icon" data-tip="Pre-loaded snapshots: today's countries, historical events, and speculative futures. Selecting one switches the entity, applies its rates, and enables the custom-scenario overlay.">i</span>
+        </label>
         <select id="preset-select">
           <option value="" selected>— pick a scenario —</option>
         </select>
@@ -84,25 +90,40 @@
       <label class="check"><input type="checkbox" id="scenario-on" /> Show custom scenario</label>
 
       <div class="control">
-        <label for="tfr-slider">Total fertility rate (children / woman) <span id="tfr-val" class="val">2.10</span></label>
+        <label for="tfr-slider">
+          Total fertility rate (children / woman)
+          <span class="info-icon" data-tip="Average children per woman over her reproductive years. Drives the births input each 5-year step. Replacement is ~2.1 in low-mortality countries.">i</span>
+          <span id="tfr-val" class="val">2.10</span>
+        </label>
         <input id="tfr-slider" type="range" min="0.5" max="12.0" step="0.05" value="2.1" />
         <div class="ticks"><span>0.5</span><span>2.1</span><span>6.0</span><span>12.0</span></div>
       </div>
 
       <div class="control">
-        <label for="e0-slider">Life expectancy at birth (years) <span id="e0-val" class="val">80</span></label>
+        <label for="e0-slider">
+          Life expectancy at birth (years)
+          <span class="info-icon" data-tip="Average lifespan implied by current age-specific mortality. The model interpolates a UN-style abridged life table to derive 5-year survival ratios — higher e₀ means more people in older cohorts.">i</span>
+          <span id="e0-val" class="val">80</span>
+        </label>
         <input id="e0-slider" type="range" min="20" max="200" step="0.5" value="80" />
         <div class="ticks"><span>20</span><span>80</span><span>140</span><span>200</span></div>
       </div>
 
       <div class="control">
-        <label for="mig-slider">Net migration (per 1,000 / yr) <span id="mig-val" class="val">0</span></label>
+        <label for="mig-slider">
+          Net migration (per 1,000 / yr)
+          <span class="info-icon" data-tip="Net migrants per 1,000 of the unshocked baseline population, applied each year. Distributed across age bands using a typical migrant profile (peak ages 20–34).">i</span>
+          <span id="mig-val" class="val">0</span>
+        </label>
         <input id="mig-slider" type="range" min="-20" max="50" step="0.5" value="0" />
         <div class="ticks"><span>−20</span><span>0</span><span>+50</span></div>
       </div>
 
       <div class="control">
-        <label for="asfr-pattern">Childbearing age pattern</label>
+        <label for="asfr-pattern">
+          Childbearing age pattern
+          <span class="info-icon" data-tip="Where in a woman's reproductive life her births tend to fall. Early = high-fertility / SSA pattern. Mid = typical middle-income. Late = developed. Total TFR is preserved; only the timing shifts.">i</span>
+        </label>
         <select id="asfr-pattern">
           <option value="early">Early peak (high-fertility pattern)</option>
           <option value="mid" selected>Middle peak (typical middle-income)</option>
@@ -111,30 +132,44 @@
       </div>
 
       <div class="control">
-        <label for="repro-max-slider">Reproductive age max <span id="repro-max-val" class="val">49</span></label>
+        <label for="repro-max-slider">
+          Reproductive age max
+          <span class="info-icon" data-tip="Upper age of the fertile window. Default 49 reflects biology. Extending it (artificial wombs, menopause delay) redistributes the same TFR across more years; ~7.5% of TFR moves to ages 50–69 when fully extended.">i</span>
+          <span id="repro-max-val" class="val">49</span>
+        </label>
         <input id="repro-max-slider" type="range" min="49" max="70" step="1" value="49" />
         <div class="ticks"><span>49 (biological)</span><span>60</span><span>70</span></div>
       </div>
 
       <div class="control">
-        <label for="srb-slider">Sex ratio at birth (boys per 100 girls) <span id="srb-val" class="val">105</span></label>
+        <label for="srb-slider">
+          Sex ratio at birth (boys per 100 girls)
+          <span class="info-icon" data-tip="Natural is ~105. Sex-selective abortion can push it to 117+ (China during one-child policy). Higher SRB means fewer mothers in the next generation, raising the replacement-rate TFR.">i</span>
+          <span id="srb-val" class="val">105</span>
+        </label>
         <input id="srb-slider" type="range" min="95" max="130" step="1" value="105" />
         <div class="ticks"><span>95</span><span>105 (natural)</span><span>130</span></div>
       </div>
 
       <div class="control">
-        <label for="retirement-slider">Retirement age threshold <span id="retirement-val" class="val">65</span></label>
+        <label for="retirement-slider">
+          Retirement age threshold
+          <span class="info-icon" data-tip="Boundary between working-age denominator and old-age dependents in the dep-ratio formula. Default 65. Raise it to model 'retirement extends with longevity' — the ratio is recomputed live from the same population.">i</span>
+          <span id="retirement-val" class="val">65</span>
+        </label>
         <input id="retirement-slider" type="range" min="50" max="95" step="1" value="65" />
         <div class="ticks"><span>50</span><span>65</span><span>95</span></div>
       </div>
 
       <div class="control">
-        <label for="proj-end">Project until</label>
+        <label for="proj-end">
+          Project until
+          <span class="info-icon" data-tip="Last year of the cohort-component projection. The engine steps in 5-year increments from the 2023 seed; the dashed line and pyramid end at the closest 5-year tick to this year.">i</span>
+        </label>
         <select id="proj-end">
           <option value="2050">2050</option>
           <option value="2075">2075</option>
           <option value="2100" selected>2100</option>
-          <option value="2150">2150</option>
         </select>
       </div>
 
@@ -151,16 +186,27 @@
           <input type="checkbox" id="shock-on" /> Enable shock event
         </label>
         <div class="control">
-          <label for="shock-year">Shock year <span id="shock-year-val" class="val">2030</span></label>
+          <label for="shock-year">
+            Shock year
+            <span class="info-icon" data-tip="When the one-shot population change occurs. Snapped to 5-year increments to align with the projection step. The pyramid bar reflects the post-shock state from this year onward.">i</span>
+            <span id="shock-year-val" class="val">2030</span>
+          </label>
           <input id="shock-year" type="range" min="2025" max="2100" step="5" value="2030" />
         </div>
         <div class="control">
-          <label for="shock-fraction">Population change <span id="shock-fraction-val" class="val">−5%</span></label>
+          <label for="shock-fraction">
+            Population change
+            <span class="info-icon" data-tip="How much the targeted age band changes in the shock year. Negative = loss (pandemic, war). Positive = gain (refugee absorption, annexation). Migration in subsequent years is decoupled so the shock doesn't cascade.">i</span>
+            <span id="shock-fraction-val" class="val">−5%</span>
+          </label>
           <input id="shock-fraction" type="range" min="-40" max="40" step="1" value="-5" />
           <div class="ticks"><span>−40% (loss)</span><span>0</span><span>+40% (gain)</span></div>
         </div>
         <div class="control">
-          <label for="shock-target">Affects which age band</label>
+          <label for="shock-target">
+            Affects which age band
+            <span class="info-icon" data-tip="Targeting matters: a uniform shock leaves the dep ratio unchanged because numerator and denominator scale together. Working-age targeting is what makes a pandemic visibly bump the ratio.">i</span>
+          </label>
           <select id="shock-target">
             <option value="all" selected>All ages</option>
             <option value="working">Working-age (15–64)</option>

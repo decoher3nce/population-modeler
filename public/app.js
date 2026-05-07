@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards, replacementTfr } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "15";
+const DATA_VERSION = "16";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -1193,6 +1193,45 @@ function wireEvents() {
     // Reset the dropdown back to placeholder so the same preset can be re-applied
     ev.target.value = "";
   });
+
+  // Info-icon tooltips. Rendered in document.body with position:fixed so the
+  // tooltip can escape the sidebar's overflow:auto. One reused element per page.
+  (() => {
+    const tooltip = document.createElement("div");
+    tooltip.className = "info-tooltip";
+    tooltip.style.display = "none";
+    document.body.appendChild(tooltip);
+
+    const place = (icon) => {
+      const tip = icon.dataset.tip;
+      if (!tip) return;
+      tooltip.textContent = tip;
+      tooltip.style.display = "block";
+      const r = icon.getBoundingClientRect();
+      // Default: tooltip to the right, vertically centered on icon
+      const tw = 280; // matches max-width
+      const margin = 8;
+      let left = r.right + margin;
+      // If overflow off the right edge, flip to the left of the icon
+      if (left + tw + 8 > window.innerWidth) {
+        left = Math.max(8, r.left - tw - margin);
+      }
+      tooltip.style.left = left + "px";
+      tooltip.style.top = Math.max(8, r.top + r.height / 2) + "px";
+      tooltip.style.transform = "translateY(-50%)";
+    };
+    document.addEventListener("mouseover", (ev) => {
+      const icon = ev.target.closest && ev.target.closest(".info-icon");
+      if (icon) place(icon);
+    });
+    document.addEventListener("mouseout", (ev) => {
+      const icon = ev.target.closest && ev.target.closest(".info-icon");
+      if (icon) tooltip.style.display = "none";
+    });
+    // Hide on scroll/resize so tooltip never floats over wrong location
+    document.addEventListener("scroll", () => { tooltip.style.display = "none"; }, true);
+    window.addEventListener("resize", () => { tooltip.style.display = "none"; });
+  })();
 
   // Modal open buttons in the top nav (and explainer block)
   document.querySelectorAll("[data-open-dialog]").forEach((btn) => {

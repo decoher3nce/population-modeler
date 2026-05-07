@@ -547,6 +547,43 @@ details.custom-data textarea {
 }
 .chart-card:first-child .chart-host { height: 460px; }
 
+/* Info icon for custom-scenario controls.
+   Click/hover renders a tooltip via JS into document.body using fixed
+   positioning so the tooltip can escape the sidebar's overflow:auto. */
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0b1220;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: "Times New Roman", Georgia, serif;
+  cursor: help;
+  margin: 0 4px;
+  user-select: none;
+  vertical-align: middle;
+}
+.info-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(13, 17, 23, 0.97);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 400;
+  max-width: 280px;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
 /* Custom-scenario description: a row beneath the dep-ratio chart so it
    never overlays the axis labels. Hidden until a scenario is active. */
 .scenario-description {
