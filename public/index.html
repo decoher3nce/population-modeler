@@ -111,6 +111,24 @@
       </div>
 
       <div class="control">
+        <label for="repro-max-slider">Reproductive age max <span id="repro-max-val" class="val">49</span></label>
+        <input id="repro-max-slider" type="range" min="49" max="70" step="1" value="49" />
+        <div class="ticks"><span>49 (biological)</span><span>60</span><span>70</span></div>
+      </div>
+
+      <div class="control">
+        <label for="srb-slider">Sex ratio at birth (boys per 100 girls) <span id="srb-val" class="val">105</span></label>
+        <input id="srb-slider" type="range" min="95" max="130" step="1" value="105" />
+        <div class="ticks"><span>95</span><span>105 (natural)</span><span>130</span></div>
+      </div>
+
+      <div class="control">
+        <label for="retirement-slider">Retirement age threshold <span id="retirement-val" class="val">65</span></label>
+        <input id="retirement-slider" type="range" min="50" max="95" step="1" value="65" />
+        <div class="ticks"><span>50</span><span>65</span><span>95</span></div>
+      </div>
+
+      <div class="control">
         <label for="proj-end">Project until</label>
         <select id="proj-end">
           <option value="2050">2050</option>
@@ -119,6 +137,26 @@
           <option value="2150">2150</option>
         </select>
       </div>
+
+      <details class="shock-panel" id="shock-panel">
+        <summary>Population shock event (optional) ▾</summary>
+        <p class="muted small">
+          Apply a one-time population reduction at a specific year — pandemic, war,
+          asteroid, etc. Acts as an instantaneous all-ages multiplier.
+        </p>
+        <label class="check">
+          <input type="checkbox" id="shock-on" /> Enable shock event
+        </label>
+        <div class="control">
+          <label for="shock-year">Shock year <span id="shock-year-val" class="val">2030</span></label>
+          <input id="shock-year" type="range" min="2025" max="2100" step="5" value="2030" />
+        </div>
+        <div class="control">
+          <label for="shock-fraction">Population lost <span id="shock-fraction-val" class="val">5%</span></label>
+          <input id="shock-fraction" type="range" min="1" max="40" step="1" value="5" />
+          <div class="ticks"><span>1%</span><span>20%</span><span>40%</span></div>
+        </div>
+      </details>
     </section>
 
     <section class="control-block">
@@ -404,6 +442,13 @@
         keep a population stable across generations. The fundamental question:
         <em>do daughters outnumber, equal, or fall short of mothers?</em>
       </p>
+      <div class="replacement-current" id="replacement-current">
+        <div class="rep-row">
+          <span class="rep-label">Implied by your current sliders</span>
+          <span class="rep-value" id="replacement-live">—</span>
+        </div>
+        <div class="rep-detail muted small" id="replacement-detail">SRB —, life expectancy —</div>
+      </div>
       <p>
         The math starts at <strong>2.0</strong> — one daughter and, on average, one son per woman.
         Two adjustments push it higher:

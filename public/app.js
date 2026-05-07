@@ -1,7 +1,7 @@
-import { project, dependencyRatio, setStandards } from "./projection.js";
+import { project, dependencyRatio, setStandards, replacementTfr } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "11";
+const DATA_VERSION = "12";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -35,7 +35,13 @@ const state = {
   scenarioEntity: null,
   scenarioOn: false,
   customSeed: null,      // { id, name, year, pop[] } if user uploaded
-  scenario: { tfr: 2.1, e0: 80, netMigPer1000: 0, asfrPattern: "mid", endYear: 2100 },
+  scenario: {
+    tfr: 2.1, e0: 80, netMigPer1000: 0, asfrPattern: "mid", endYear: 2100,
+    srb: 105,             // boys per 100 girls at birth
+    reproAgeMax: 49,      // upper age of reproductive window
+    retirementAge: 65,    // working-age / old-age threshold for dependency ratio
+    shock: null,          // { year, fraction } when enabled, null when disabled
+  },
   charts: { dep: null, driver: null, pyramid: null },
 };
 
@@ -167,13 +173,16 @@ function buildScenarioProjection() {
     seedYear = s.year;
   }
   const sc = state.scenario;
-  const result = project(seed, seedYear, sc.endYear, {
+  return project(seed, seedYear, sc.endYear, {
     tfr: sc.tfr,
     e0: sc.e0,
     netMigPer1000: sc.netMigPer1000,
     asfrPattern: sc.asfrPattern,
+    srb: sc.srb,
+    reproAgeMax: sc.reproAgeMax,
+    retirementAge: sc.retirementAge,
+    shock: sc.shock,
   });
-  return result;
 }
 
 // ---------- chart construction ----------
@@ -495,6 +504,18 @@ function makePyramidChart() {
   });
 }
 
+function refreshReplacementDialog() {
+  const liveEl = document.getElementById("replacement-live");
+  const detailEl = document.getElementById("replacement-detail");
+  if (!liveEl || !detailEl) return;
+  const srb = state.scenario.srb;
+  const e0 = state.scenario.e0;
+  const v = replacementTfr(srb, e0);
+  liveEl.textContent = isFinite(v) ? v.toFixed(2) : "—";
+  detailEl.textContent =
+    `SRB ${srb} (boys per 100 girls), life expectancy ${e0.toFixed(1)} years`;
+}
+
 function refreshPyramidTitle() {
   const el = document.getElementById("pyramid-title");
   if (!el) return;
@@ -592,6 +613,87 @@ const PRESETS = [
   // Theoretical
   { type: "values", id: "replacement", group: "Theoretical", label: "Replacement (TFR 2.1, e₀ 80)",
     values: { tfr: 2.10, e0: 80, netMigPer1000: 0, asfrPattern: "mid" } },
+
+  // ───────── Speculative & theoretical (Phase 1 + Phase 2) ─────────
+  // Tier 1: just slider settings.
+  { type: "values", id: "spec-pronatalist", group: "Speculative & theoretical",
+    label: "Pro-natalist religion ascendant",
+    values: { tfr: 3.50, e0: 80, netMigPer1000: 0, asfrPattern: "mid" } },
+  { type: "values", id: "spec-antinatalist", group: "Speculative & theoretical",
+    label: "Anti-natalist movement",
+    values: { tfr: 0.80, e0: 82, netMigPer1000: 2, asfrPattern: "late" } },
+  { type: "values", id: "spec-marriage-collapse", group: "Speculative & theoretical",
+    label: "Marriage fragments globally",
+    values: { tfr: 0.70, e0: 82, netMigPer1000: 2, asfrPattern: "late" } },
+  { type: "values", id: "spec-ai-companions", group: "Speculative & theoretical",
+    label: "AI companions replace partnership",
+    values: { tfr: 0.50, e0: 82, netMigPer1000: 2, asfrPattern: "late" } },
+  { type: "values", id: "spec-ai-care", group: "Speculative & theoretical",
+    label: "AI eldercare & childcare lift fertility",
+    values: { tfr: 2.00, e0: 84, netMigPer1000: 3, asfrPattern: "late" } },
+  { type: "values", id: "spec-ubi", group: "Speculative & theoretical",
+    label: "UBI lifts fertility",
+    values: { tfr: 2.40, e0: 80, netMigPer1000: 3, asfrPattern: "mid" } },
+  { type: "values", id: "spec-state-collapse", group: "Speculative & theoretical",
+    label: "Aging-state collapse",
+    values: { tfr: 0.90, e0: 70, netMigPer1000: -8, asfrPattern: "late" } },
+  { type: "values", id: "spec-microplastics", group: "Speculative & theoretical",
+    label: "Endocrine disruptors suppress fertility",
+    values: { tfr: 1.00, e0: 79, netMigPer1000: 3, asfrPattern: "late" } },
+  { type: "values", id: "spec-climate-mig", group: "Speculative & theoretical",
+    label: "Climate-driven mass migration absorbed",
+    values: { tfr: 1.60, e0: 80, netMigPer1000: 30, asfrPattern: "late" } },
+  { type: "values", id: "spec-antibiotic", group: "Speculative & theoretical",
+    label: "Antibiotic resistance returns",
+    values: { tfr: 2.40, e0: 65, netMigPer1000: 0, asfrPattern: "mid" } },
+  { type: "values", id: "spec-crispr", group: "Speculative & theoretical",
+    label: "CRISPR ends inheritable diseases",
+    values: { tfr: 1.60, e0: 86, netMigPer1000: 3, asfrPattern: "late" } },
+  { type: "values", id: "spec-cure-cancer", group: "Speculative & theoretical",
+    label: "Cure for major cancers + CVD",
+    values: { tfr: 1.60, e0: 95, netMigPer1000: 3, asfrPattern: "late" } },
+  { type: "values", id: "spec-mars", group: "Speculative & theoretical",
+    label: "Mars colony — harsh conditions",
+    values: { tfr: 4.00, e0: 60, netMigPer1000: 0, asfrPattern: "mid" } },
+
+  // Phase 1 levers in play.
+  { type: "values", id: "spec-sex-selection", group: "Speculative & theoretical",
+    label: "Sex selection becomes universal",
+    values: { tfr: 1.60, e0: 80, netMigPer1000: 3, asfrPattern: "late", srb: 120 } },
+  { type: "values", id: "spec-wombs", group: "Speculative & theoretical",
+    label: "Artificial wombs decouple fertility",
+    values: { tfr: 2.50, e0: 84, netMigPer1000: 3, asfrPattern: "late", reproAgeMax: 65 } },
+  { type: "values", id: "spec-genetic-longevity", group: "Speculative & theoretical",
+    label: "Genetic-engineered longevity (e₀ 110, retire at 80)",
+    values: { tfr: 1.80, e0: 110, netMigPer1000: 3, asfrPattern: "late",
+              retirementAge: 80, reproAgeMax: 55 } },
+  { type: "values", id: "spec-radical-longevity", group: "Speculative & theoretical",
+    label: "Radical life extension (e₀ 130, retire at 90)",
+    values: { tfr: 1.60, e0: 130, netMigPer1000: 3, asfrPattern: "late",
+              retirementAge: 90, reproAgeMax: 60 } },
+
+  // Phase 2: shock-event scenarios. Each pairs a one-shot population reduction
+  // with sustained background rates that reflect the post-event environment.
+  { type: "values", id: "spec-pandemic", group: "Speculative & theoretical",
+    label: "Pandemic worse than COVID (5% loss, 2030)",
+    values: { tfr: 1.60, e0: 75, netMigPer1000: 1, asfrPattern: "late",
+              shock: { year: 2030, fraction: 0.05 } } },
+  { type: "values", id: "spec-wwiii", group: "Speculative & theoretical",
+    label: "Major war / WWIII (8% loss, 2030)",
+    values: { tfr: 1.40, e0: 72, netMigPer1000: 0, asfrPattern: "late",
+              shock: { year: 2030, fraction: 0.08 } } },
+  { type: "values", id: "spec-nuclear", group: "Speculative & theoretical",
+    label: "Regional nuclear exchange (12% loss, 2035)",
+    values: { tfr: 1.30, e0: 65, netMigPer1000: -2, asfrPattern: "mid",
+              shock: { year: 2035, fraction: 0.12 } } },
+  { type: "values", id: "spec-bioweapon", group: "Speculative & theoretical",
+    label: "Bioweapon release (6% loss, 2030)",
+    values: { tfr: 1.40, e0: 70, netMigPer1000: 0, asfrPattern: "late",
+              shock: { year: 2030, fraction: 0.06 } } },
+  { type: "values", id: "spec-asteroid", group: "Speculative & theoretical",
+    label: "Asteroid / supervolcano (25% loss, 2050)",
+    values: { tfr: 1.60, e0: 60, netMigPer1000: 0, asfrPattern: "mid",
+              shock: { year: 2050, fraction: 0.25 } } },
 
   // Reset
   { type: "reset",  id: "reset", group: "—", label: "Reset to United States today" },
@@ -699,32 +801,69 @@ function netMigPer1000ForEntity(entityId) {
   return (g - n) * 10;
 }
 
-function applyValuesToSliders({ tfr, e0, netMigPer1000, asfrPattern }) {
-  const tfrEl = document.getElementById("tfr-slider");
-  const e0El = document.getElementById("e0-slider");
-  const migEl = document.getElementById("mig-slider");
-  const patEl = document.getElementById("asfr-pattern");
-  if (tfr != null) {
-    const v = Math.max(0.5, Math.min(12.0, Math.round(tfr * 20) / 20));
-    tfrEl.value = v;
-    state.scenario.tfr = v;
-    document.getElementById("tfr-val").textContent = v.toFixed(2);
-  }
-  if (e0 != null) {
-    const v = Math.max(20, Math.min(200, Math.round(e0 * 2) / 2));
-    e0El.value = v;
-    state.scenario.e0 = v;
-    document.getElementById("e0-val").textContent = v.toFixed(1);
-  }
-  if (netMigPer1000 != null) {
-    const v = Math.max(-20, Math.min(50, Math.round(netMigPer1000 * 2) / 2));
-    migEl.value = v;
-    state.scenario.netMigPer1000 = v;
-    document.getElementById("mig-val").textContent = v.toFixed(1);
-  }
+function applyValuesToSliders(values) {
+  const { tfr, e0, netMigPer1000, asfrPattern,
+          srb, reproAgeMax, retirementAge, shock } = values;
+
+  const setVal = (sliderId, valId, raw, lo, hi, snap, fmt) => {
+    if (raw == null) return;
+    const v = Math.max(lo, Math.min(hi, snap(raw)));
+    const el = document.getElementById(sliderId);
+    el.value = v;
+    document.getElementById(valId).textContent = fmt(v);
+    return v;
+  };
+
+  const tfrV = setVal("tfr-slider", "tfr-val", tfr, 0.5, 12.0,
+    (x) => Math.round(x * 20) / 20, (v) => v.toFixed(2));
+  if (tfrV != null) state.scenario.tfr = tfrV;
+
+  const e0V = setVal("e0-slider", "e0-val", e0, 20, 200,
+    (x) => Math.round(x * 2) / 2, (v) => v.toFixed(1));
+  if (e0V != null) state.scenario.e0 = e0V;
+
+  const migV = setVal("mig-slider", "mig-val", netMigPer1000, -20, 50,
+    (x) => Math.round(x * 2) / 2, (v) => v.toFixed(1));
+  if (migV != null) state.scenario.netMigPer1000 = migV;
+
   if (asfrPattern) {
-    patEl.value = asfrPattern;
+    document.getElementById("asfr-pattern").value = asfrPattern;
     state.scenario.asfrPattern = asfrPattern;
+  }
+
+  // Phase 1 levers
+  const srbV = setVal("srb-slider", "srb-val", srb, 95, 130,
+    (x) => Math.round(x), (v) => `${v}`);
+  if (srbV != null) state.scenario.srb = srbV;
+
+  const reproV = setVal("repro-max-slider", "repro-max-val", reproAgeMax, 49, 70,
+    (x) => Math.round(x), (v) => `${v}`);
+  if (reproV != null) state.scenario.reproAgeMax = reproV;
+
+  const retV = setVal("retirement-slider", "retirement-val", retirementAge, 50, 95,
+    (x) => Math.round(x), (v) => `${v}`);
+  if (retV != null) state.scenario.retirementAge = retV;
+
+  // Phase 2: shock event. `shock: null` explicitly disables; `undefined` leaves alone.
+  if (shock !== undefined) {
+    const onCb = document.getElementById("shock-on");
+    const yEl = document.getElementById("shock-year");
+    const fEl = document.getElementById("shock-fraction");
+    const panel = document.getElementById("shock-panel");
+    if (shock && shock.year != null && shock.fraction != null) {
+      onCb.checked = true;
+      const yClamped = Math.max(2025, Math.min(2150, Math.round(shock.year / 5) * 5));
+      const fPct = Math.max(1, Math.min(40, Math.round(shock.fraction * 100)));
+      yEl.value = yClamped;
+      fEl.value = fPct;
+      document.getElementById("shock-year-val").textContent = `${yClamped}`;
+      document.getElementById("shock-fraction-val").textContent = `${fPct}%`;
+      state.scenario.shock = { year: yClamped, fraction: fPct / 100 };
+      panel.open = true;
+    } else {
+      onCb.checked = false;
+      state.scenario.shock = null;
+    }
   }
 }
 
@@ -742,6 +881,17 @@ function applyPreset(id) {
     renderScenarioEntityOptions();
   };
 
+  // Default-clear the Phase 1 / Phase 2 levers each time a preset is applied,
+  // so e.g. clicking "China today" after the radical-longevity preset doesn't
+  // silently leave retirement age at 90. Presets that want non-default values
+  // override these in their own values payload below.
+  const defaultLevers = {
+    srb: 105,
+    reproAgeMax: 49,
+    retirementAge: 65,
+    shock: null,
+  };
+
   if (preset.type === "snapshot") {
     switchEntity(preset.entity);
     const tfr = latestForEntity(preset.entity, "tfr");
@@ -751,6 +901,7 @@ function applyPreset(id) {
       tfr, e0,
       netMigPer1000: mig != null ? mig : 0,
       asfrPattern: pickAsfrPatternForE0(e0),
+      ...defaultLevers,
     });
   } else if (preset.type === "historical") {
     switchEntity(preset.entity);
@@ -760,9 +911,10 @@ function applyPreset(id) {
       e0: v.e0,
       netMigPer1000: v.netMigPer1000 ?? 0,
       asfrPattern: pickAsfrPatternForE0(v.e0),
+      ...defaultLevers,
     });
   } else if (preset.type === "values") {
-    applyValuesToSliders(preset.values);
+    applyValuesToSliders({ ...defaultLevers, ...preset.values });
   } else if (preset.type === "reset") {
     state.selected = ["United States"].filter((eid) => state.entities.some((e) => e.id === eid));
     if (state.selected.length === 0) state.selected = state.featured.slice(0, 1);
@@ -774,6 +926,7 @@ function applyPreset(id) {
       tfr, e0,
       netMigPer1000: mig != null ? mig : 0,
       asfrPattern: pickAsfrPatternForE0(e0),
+      ...defaultLevers,
     });
     renderSelectedChips();
     renderScenarioEntityOptions();
@@ -895,6 +1048,12 @@ function wireEvents() {
   const mig = document.getElementById("mig-slider");
   const pat = document.getElementById("asfr-pattern");
   const endYear = document.getElementById("proj-end");
+  const srb = document.getElementById("srb-slider");
+  const reproMax = document.getElementById("repro-max-slider");
+  const retirement = document.getElementById("retirement-slider");
+  const shockOn = document.getElementById("shock-on");
+  const shockYear = document.getElementById("shock-year");
+  const shockFraction = document.getElementById("shock-fraction");
 
   function syncSliders() {
     state.scenario.tfr = parseFloat(tfr.value);
@@ -902,14 +1061,37 @@ function wireEvents() {
     state.scenario.netMigPer1000 = parseFloat(mig.value);
     state.scenario.asfrPattern = pat.value;
     state.scenario.endYear = parseInt(endYear.value, 10);
+    state.scenario.srb = parseInt(srb.value, 10);
+    state.scenario.reproAgeMax = parseInt(reproMax.value, 10);
+    state.scenario.retirementAge = parseInt(retirement.value, 10);
     document.getElementById("tfr-val").textContent = state.scenario.tfr.toFixed(2);
     document.getElementById("e0-val").textContent = state.scenario.e0.toFixed(1);
     document.getElementById("mig-val").textContent = state.scenario.netMigPer1000.toFixed(1);
+    document.getElementById("srb-val").textContent = `${state.scenario.srb}`;
+    document.getElementById("repro-max-val").textContent = `${state.scenario.reproAgeMax}`;
+    document.getElementById("retirement-val").textContent = `${state.scenario.retirementAge}`;
+    // Shock event
+    document.getElementById("shock-year-val").textContent = `${shockYear.value}`;
+    document.getElementById("shock-fraction-val").textContent = `${shockFraction.value}%`;
+    if (shockOn.checked) {
+      state.scenario.shock = {
+        year: parseInt(shockYear.value, 10),
+        fraction: parseInt(shockFraction.value, 10) / 100,
+      };
+    } else {
+      state.scenario.shock = null;
+    }
     // Always refresh — even when the scenario overlay is off, the pyramid year line
     // on the dep/driver charts and the pyramid bars themselves track the slider state.
     refreshAllCharts();
+    // Keep the replacement-rate dialog's live readout in sync if it happens to be open
+    refreshReplacementDialog();
   }
-  [tfr, e0, mig, pat, endYear].forEach((el) => el.addEventListener("input", syncSliders));
+  [tfr, e0, mig, pat, endYear, srb, reproMax, retirement,
+   shockOn, shockYear, shockFraction].forEach((el) =>
+    el.addEventListener("input", syncSliders)
+  );
+  shockOn.addEventListener("change", syncSliders);
 
   document.getElementById("preset-select").addEventListener("change", (ev) => {
     const id = ev.target.value;
@@ -919,10 +1101,12 @@ function wireEvents() {
     ev.target.value = "";
   });
 
-  // Modal open buttons in the top nav
+  // Modal open buttons in the top nav (and explainer block)
   document.querySelectorAll("[data-open-dialog]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.openDialog;
+      // Recompute live values for dialogs that depend on slider state
+      if (id === "replacement-rate-dialog") refreshReplacementDialog();
       const dlg = document.getElementById(id);
       if (dlg && typeof dlg.showModal === "function") dlg.showModal();
     });
@@ -940,7 +1124,7 @@ function wireEvents() {
   });
 
   // Auto-enable scenario when sliders change for the first time
-  [tfr, e0, mig, pat].forEach((el) => {
+  [tfr, e0, mig, pat, srb, reproMax, retirement].forEach((el) => {
     el.addEventListener("input", () => {
       const cb = document.getElementById("scenario-on");
       if (!cb.checked) {

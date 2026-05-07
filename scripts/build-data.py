@@ -302,18 +302,27 @@ def main():
     #
     # ASFR shape: shares of TFR contributed by each 5-year group 15-19 ... 45-49.
     # Three reference patterns (early, mid, late peak), client interpolates by mean age of childbearing.
+    # ASFR shares are stored over 11 5-year groups: 15-19, 20-24, ..., 65-69.
+    # The biological default reproductive window is 15-49 (first 7 entries).
+    # The trailing entries (50-54, 55-59, 60-64, 65-69) carry token shares for
+    # speculative scenarios where reproductive lifespan is extended (artificial
+    # wombs, menopause delay). Projection code re-normalises to whichever slice
+    # the user's `reproductive age max` slider activates so TFR stays a true
+    # children-per-woman quantity over whichever window is in play.
     asfr_patterns = {
         # high TFR / earlier peak (e.g. SSA pattern)
-        "early": [0.10, 0.22, 0.25, 0.20, 0.14, 0.07, 0.02],
+        "early": [0.10, 0.22, 0.25, 0.20, 0.14, 0.07, 0.02, 0.005, 0.002, 0.001, 0.0005],
         # middle pattern (most middle-income)
-        "mid":   [0.06, 0.18, 0.27, 0.24, 0.16, 0.07, 0.02],
+        "mid":   [0.06, 0.18, 0.27, 0.24, 0.16, 0.07, 0.02, 0.005, 0.002, 0.001, 0.0005],
         # later peak (developed, low TFR)
-        "late":  [0.02, 0.10, 0.25, 0.32, 0.22, 0.07, 0.02],
+        "late":  [0.02, 0.10, 0.25, 0.32, 0.22, 0.07, 0.02, 0.005, 0.002, 0.001, 0.0005],
     }
-    # Verify each sums ~ 1
+    # Normalise each pattern so the first 7 entries (15-49 biological default) sum to 1.
+    # Trailing entries are absolute (in the same fractions-of-TFR units), and the
+    # projection re-normalises against whatever slice is active.
     for k, v in asfr_patterns.items():
-        s = sum(v)
-        asfr_patterns[k] = [x / s for x in v]
+        head_sum = sum(v[:7])
+        asfr_patterns[k] = [x / head_sum for x in v]
 
     # Survival ratios by 5-year age group at reference life expectancies.
     # Survival ratio s[a] = L[a+5] / L[a] from a model life table (UN-style abridged).
