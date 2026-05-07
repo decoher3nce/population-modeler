@@ -146,9 +146,10 @@ export function project(seedPop, seedYear, endYear, scenario) {
   // Always emit the starting state
   out.push({ year, pop: pop.slice(), ...dependencyRatio(pop) });
 
-  // Step 5-year periods until we exceed endYear
-  // First step may be partial if seedYear isn't aligned, but for simplicity we step 5y from seedYear.
-  while (year < endYear) {
+  // Step in 5-year periods. Stop before overshooting endYear so the final
+  // data point is the last 5-year step that lies on or before endYear
+  // (e.g. with seedYear=2023 and endYear=2100, the last year is 2098, not 2103).
+  while (year + 5 <= endYear) {
     const inputs = {
       tfr: typeof scenario.tfr === "function" ? scenario.tfr(year) : scenario.tfr,
       e0: typeof scenario.e0 === "function" ? scenario.e0(year) : scenario.e0,

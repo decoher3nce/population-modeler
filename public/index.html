@@ -18,57 +18,36 @@
   <nav class="topnav">
     <button type="button" class="navlink" data-open-dialog="about-dialog">About</button>
     <button type="button" class="navlink" data-open-dialog="methodology-dialog">Methodology</button>
-    <a href="#data-sources">Data sources</a>
+    <button type="button" class="navlink" data-open-dialog="data-sources-dialog">Data sources</button>
     <a href="https://github.com/decoher3nce/population-modeler" target="_blank" rel="noreferrer">GitHub</a>
   </nav>
 </header>
 
-<section class="explainer">
-  <div class="explainer-text">
-    <h2>What is the dependency ratio?</h2>
-    <p>
-      A single number that summarises the share of a population that working-age adults must support.
-      It rises when there are more children, more retirees, or fewer working-age adults relative to either.
-      Conventionally expressed as <strong>dependents per 100 working-age people</strong> — i.e., a percentage.
-    </p>
-    <ul class="legend-list">
-      <li><span class="dot d-young"></span><strong>Young dependents</strong>: ages 0–14</li>
-      <li><span class="dot d-work"></span><strong>Working-age</strong>: ages 15–64 (the denominator)</li>
-      <li><span class="dot d-old"></span><strong>Old-age dependents</strong>: ages 65+</li>
-    </ul>
-  </div>
-  <div class="explainer-eq">
-    <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
-      <mrow>
-        <mtext>Dependency ratio</mtext>
-        <mspace width="0.4em" />
-        <mo>=</mo>
-        <mspace width="0.4em" />
-        <mfrac>
-          <mrow>
-            <msub><mi>P</mi><mrow><mn>0</mn><mo>–</mo><mn>14</mn></mrow></msub>
-            <mo>+</mo>
-            <msub><mi>P</mi><mrow><mn>65</mn><mo>+</mo></mrow></msub>
-          </mrow>
-          <msub><mi>P</mi><mrow><mn>15</mn><mo>–</mo><mn>64</mn></mrow></msub>
-        </mfrac>
-        <mspace width="0.3em" />
-        <mo>×</mo>
-        <mn>100</mn>
-        <mspace width="0.4em" />
-        <mtext>%</mtext>
-      </mrow>
-    </math>
-    <p class="eq-note">
-      where <math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>P</mi><mi>a</mi></msub></math>
-      is the population in age band <math xmlns="http://www.w3.org/1998/Math/MathML"><mi>a</mi></math>.
-      Source: <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer">UN WPP 2024</a>
-      via <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer">Our World in Data</a>.
-    </p>
-  </div>
-</section>
-
 <main class="layout">
+
+  <section class="explainer">
+    <h2>What is the dependency ratio?</h2>
+
+    <p class="lead">
+      The dependency ratio is the proportion of the <strong class="t-dep">dependent population</strong>
+      to the <strong class="t-work">working population</strong>. It is one of the most-cited
+      single numbers in demography because it sits on top of two slow-moving inputs:
+      <strong>fertility</strong> and <strong>life expectancy</strong>. Both are observable today,
+      which makes the next few decades unusually predictable.
+    </p>
+
+    <p class="explainer-cta">
+      <button type="button" class="link-button" data-open-dialog="formula-dialog">
+        Show the formula and how to read the value <span aria-hidden="true">→</span>
+      </button>
+      <button type="button" class="link-button" data-open-dialog="support-ratio-dialog">
+        Support ratio <span aria-hidden="true">→</span>
+      </button>
+      <button type="button" class="link-button" data-open-dialog="replacement-rate-dialog">
+        Replacement rate <span aria-hidden="true">→</span>
+      </button>
+    </p>
+  </section>
 
   <aside class="sidebar">
 
@@ -84,23 +63,24 @@
     </section>
 
     <section class="control-block">
-      <h3>Display</h3>
-      <label class="check"><input type="checkbox" id="show-bands" checked /> Reference bands (50/65/80)</label>
-      <label class="check"><input type="checkbox" id="split-young-old" /> Split young / old dependency</label>
-      <label class="check"><input type="checkbox" id="log-pop" /> Log scale (population pyramid)</label>
-    </section>
-
-    <section class="control-block">
       <h3>Custom scenario</h3>
       <p class="muted small">
-        Override TFR, life expectancy, and net migration. Runs a cohort-component projection from 2023
-        forward and overlays it as a dashed line.
+        Override total fertility rate, life expectancy, and net migration. Runs a cohort-component
+        projection from 2023 forward and overlays it as a dashed line.
       </p>
 
       <div class="control">
         <label for="scenario-entity">Apply scenario to</label>
         <select id="scenario-entity"></select>
       </div>
+
+      <div class="control">
+        <label for="preset-select">Quick scenarios</label>
+        <select id="preset-select">
+          <option value="" selected>— pick a scenario —</option>
+        </select>
+      </div>
+
       <label class="check"><input type="checkbox" id="scenario-on" /> Show custom scenario</label>
 
       <div class="control">
@@ -111,20 +91,20 @@
 
       <div class="control">
         <label for="e0-slider">Life expectancy at birth (years) <span id="e0-val" class="val">80</span></label>
-        <input id="e0-slider" type="range" min="50" max="95" step="0.5" value="80" />
-        <div class="ticks"><span>50</span><span>80</span><span>95</span></div>
+        <input id="e0-slider" type="range" min="20" max="95" step="0.5" value="80" />
+        <div class="ticks"><span>20</span><span>50</span><span>80</span><span>95</span></div>
       </div>
 
       <div class="control">
         <label for="mig-slider">Net migration (per 1,000 / yr) <span id="mig-val" class="val">0</span></label>
-        <input id="mig-slider" type="range" min="-10" max="20" step="0.5" value="0" />
-        <div class="ticks"><span>−10</span><span>0</span><span>+20</span></div>
+        <input id="mig-slider" type="range" min="-20" max="50" step="0.5" value="0" />
+        <div class="ticks"><span>−20</span><span>0</span><span>+50</span></div>
       </div>
 
       <div class="control">
         <label for="asfr-pattern">Childbearing age pattern</label>
         <select id="asfr-pattern">
-          <option value="early">Early peak (high-TFR pattern)</option>
+          <option value="early">Early peak (high-fertility pattern)</option>
           <option value="mid" selected>Middle peak (typical middle-income)</option>
           <option value="late">Late peak (developed)</option>
         </select>
@@ -138,17 +118,6 @@
           <option value="2100" selected>2100</option>
           <option value="2150">2150</option>
         </select>
-      </div>
-
-      <div class="control">
-        <label>Quick scenarios</label>
-        <div class="presets">
-          <button class="preset" data-preset="replacement">Replacement</button>
-          <button class="preset" data-preset="japan-trend">Japan-trend</button>
-          <button class="preset" data-preset="china-2100">Aging society</button>
-          <button class="preset" data-preset="immigration">+ Immigration</button>
-          <button class="preset" data-preset="reset">Reset</button>
-        </div>
       </div>
     </section>
 
@@ -203,8 +172,8 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>Drivers (TFR &amp; life expectancy)</h3>
-        <span class="muted">two slow-moving inputs that determine the trajectory</span>
+        <h3>Inputs to demography</h3>
+        <span class="muted">total fertility rate &amp; life expectancy — the two slow-moving inputs that determine the trajectory</span>
       </div>
       <div class="chart-host">
         <canvas id="driver-chart"></canvas>
@@ -213,45 +182,27 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>Population pyramid (2023 vs scenario end-year)</h3>
+        <h3 id="pyramid-title">Population pyramid (2023 vs 2100)</h3>
         <span class="muted">applies to the scenario entity</span>
       </div>
       <div class="chart-host">
         <canvas id="pyramid-chart"></canvas>
+        <div id="pyramid-stats" class="pyramid-stats">
+          <div id="pyramid-stat-now" class="pyramid-stat-row now">
+            <span class="dot"></span>
+            <span id="pyramid-stat-now-text" class="text"></span>
+          </div>
+          <div id="pyramid-stat-future" class="pyramid-stat-row future">
+            <span class="dot"></span>
+            <span id="pyramid-stat-future-text" class="text"></span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
 </main>
 
-<section id="data-sources" class="page-section">
-  <h2>Data sources</h2>
-  <p>
-    All real-data baselines come from the
-    <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer"><strong>United Nations World Population Prospects 2024</strong></a>
-    (UN Department of Economic and Social Affairs, Population Division), distributed in tidy form by
-    <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer"><strong>Our World in Data</strong></a>.
-    Specific OWID grapher slugs consumed by the build pipeline:
-  </p>
-  <ul>
-    <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-projected-to-2100" target="_blank" rel="noreferrer">age-dependency-ratio-projected-to-2100</a> — total dependency ratio, historical + medium-variant projection.</li>
-    <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-old" target="_blank" rel="noreferrer">age-dependency-ratio-old</a> — old-age dependency ratio.</li>
-    <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-young-of-working-age-population" target="_blank" rel="noreferrer">age-dependency-ratio-young-of-working-age-population</a> — youth dependency ratio.</li>
-    <li><a href="https://ourworldindata.org/grapher/fertility-rate-with-projections" target="_blank" rel="noreferrer">fertility-rate-with-projections</a> — total fertility rate, historical + projection.</li>
-    <li><a href="https://ourworldindata.org/grapher/life-expectancy" target="_blank" rel="noreferrer">life-expectancy</a> — life expectancy at birth.</li>
-    <li><a href="https://ourworldindata.org/grapher/population-young-working-elderly-with-projections" target="_blank" rel="noreferrer">population-young-working-elderly-with-projections</a> — population by broad age group.</li>
-    <li><a href="https://ourworldindata.org/grapher/population-by-five-year-age-group" target="_blank" rel="noreferrer">population-by-five-year-age-group</a> — 5-year age group structure (the projection seed).</li>
-    <li><a href="https://ourworldindata.org/grapher/population-unwpp" target="_blank" rel="noreferrer">population-unwpp</a> — total population.</li>
-    <li><a href="https://ourworldindata.org/grapher/population-growth-rate-with-and-without-migration" target="_blank" rel="noreferrer">population-growth-rate-with-and-without-migration</a> — derives net migration as growth − natural change.</li>
-  </ul>
-  <p>
-    The raw CSVs are kept in the repository under
-    <a href="https://github.com/decoher3nce/population-modeler/tree/main/raw-data" target="_blank" rel="noreferrer"><code>raw-data/</code></a>
-    and the build script that turns them into bundled JSON lives at
-    <a href="https://github.com/decoher3nce/population-modeler/blob/main/scripts/build-data.py" target="_blank" rel="noreferrer"><code>scripts/build-data.py</code></a>,
-    so anyone can rebuild the data pipeline end-to-end.
-  </p>
-</section>
 
 <footer>
   <p>
@@ -290,6 +241,195 @@
   </form>
 </dialog>
 
+<dialog id="data-sources-dialog" class="modal modal-wide">
+  <form method="dialog" class="modal-form">
+    <header class="modal-header">
+      <h2>Data sources</h2>
+      <button type="submit" class="modal-close" aria-label="Close" value="cancel">×</button>
+    </header>
+    <div class="modal-body">
+      <p>
+        All real-data baselines come from the
+        <a href="https://population.un.org/wpp/" target="_blank" rel="noreferrer"><strong>United Nations World Population Prospects 2024</strong></a>
+        (UN Department of Economic and Social Affairs, Population Division), distributed in tidy
+        form by
+        <a href="https://ourworldindata.org/fertility-rate" target="_blank" rel="noreferrer"><strong>Our World in Data</strong></a>.
+        Specific OWID grapher slugs consumed by the build pipeline:
+      </p>
+      <ul>
+        <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-projected-to-2100" target="_blank" rel="noreferrer">age-dependency-ratio-projected-to-2100</a> — total dependency ratio, historical + medium-variant projection.</li>
+        <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-old" target="_blank" rel="noreferrer">age-dependency-ratio-old</a> — old-age dependency ratio.</li>
+        <li><a href="https://ourworldindata.org/grapher/age-dependency-ratio-young-of-working-age-population" target="_blank" rel="noreferrer">age-dependency-ratio-young-of-working-age-population</a> — youth dependency ratio.</li>
+        <li><a href="https://ourworldindata.org/grapher/fertility-rate-with-projections" target="_blank" rel="noreferrer">fertility-rate-with-projections</a> — total fertility rate, historical + projection.</li>
+        <li><a href="https://ourworldindata.org/grapher/life-expectancy" target="_blank" rel="noreferrer">life-expectancy</a> — life expectancy at birth.</li>
+        <li><a href="https://ourworldindata.org/grapher/population-young-working-elderly-with-projections" target="_blank" rel="noreferrer">population-young-working-elderly-with-projections</a> — population by broad age group.</li>
+        <li><a href="https://ourworldindata.org/grapher/population-by-five-year-age-group" target="_blank" rel="noreferrer">population-by-five-year-age-group</a> — 5-year age group structure (the projection seed).</li>
+        <li><a href="https://ourworldindata.org/grapher/population-unwpp" target="_blank" rel="noreferrer">population-unwpp</a> — total population.</li>
+        <li><a href="https://ourworldindata.org/grapher/population-growth-rate-with-and-without-migration" target="_blank" rel="noreferrer">population-growth-rate-with-and-without-migration</a> — derives net migration as growth − natural change.</li>
+      </ul>
+      <p>
+        The raw CSVs are kept in the repository under
+        <a href="https://github.com/decoher3nce/population-modeler/tree/main/raw-data" target="_blank" rel="noreferrer"><code>raw-data/</code></a>
+        and the build script that turns them into bundled JSON lives at
+        <a href="https://github.com/decoher3nce/population-modeler/blob/main/scripts/build-data.py" target="_blank" rel="noreferrer"><code>scripts/build-data.py</code></a>,
+        so anyone can rebuild the data pipeline end-to-end.
+      </p>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="formula-dialog" class="modal modal-wide">
+  <form method="dialog" class="modal-form">
+    <header class="modal-header">
+      <h2>Formula &amp; how to read the value</h2>
+      <button type="submit" class="modal-close" aria-label="Close" value="cancel">×</button>
+    </header>
+    <div class="modal-body">
+      <figure class="formula-card">
+        <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
+          <mrow>
+            <mtext>Dependency&#xa0;ratio</mtext>
+            <mspace width="0.4em" />
+            <mo>=</mo>
+            <mspace width="0.4em" />
+            <mfrac>
+              <mrow mathcolor="#f97583">
+                <msub><mi>P</mi><mrow><mn>0</mn><mo>&#x2013;</mo><mn>14</mn></mrow></msub>
+                <mo>+</mo>
+                <msub><mi>P</mi><mrow><mn>65</mn><mo>+</mo></mrow></msub>
+              </mrow>
+              <msub mathcolor="#56d364"><mi>P</mi><mrow><mn>15</mn><mo>&#x2013;</mo><mn>64</mn></mrow></msub>
+            </mfrac>
+            <mspace width="0.3em" />
+            <mo>×</mo>
+            <mn>100</mn>
+            <mspace width="0.4em" />
+            <mtext>%</mtext>
+          </mrow>
+        </math>
+        <figcaption>
+          where
+          <span class="var v-dep"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>P</mi><mrow><mn>0</mn><mo>–</mo><mn>14</mn></mrow></msub></math> is the number of children</span>,
+          <span class="var v-dep"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>P</mi><mrow><mn>65</mn><mo>+</mo></mrow></msub></math> is the number of retired people</span>,
+          and
+          <span class="var v-work"><math xmlns="http://www.w3.org/1998/Math/MathML"><msub><mi>P</mi><mrow><mn>15</mn><mo>–</mo><mn>64</mn></mrow></msub></math> is the number of working-age people</span>.
+        </figcaption>
+      </figure>
+
+      <h3 class="bands-title">How to read the value</h3>
+      <ol class="bands-grid">
+        <li class="band-card b-50">
+          <div class="band-key">≤&nbsp;50%</div>
+          <div class="band-name">Healthy</div>
+          <p>Enough working-age adults to support the dependent population. Pension and education systems run sustainably.</p>
+        </li>
+        <li class="band-card b-65">
+          <div class="band-key">50–65%</div>
+          <div class="band-name">Strain</div>
+          <p>Fewer workers available per dependent. Pressure builds on social spending, healthcare, and the labour market.</p>
+        </li>
+        <li class="band-card b-80">
+          <div class="band-key">65–80%</div>
+          <div class="band-name">Decline</div>
+          <p>The economy is structurally aging. Tax base shrinks; productivity per worker has to keep rising just to hold the line.</p>
+        </li>
+        <li class="band-card b-128">
+          <div class="band-key">&gt;&nbsp;80%</div>
+          <div class="band-name">Crisis</div>
+          <p>The working-age base may no longer fund pensions, healthcare, and child support without policy intervention or imported labour.</p>
+        </li>
+      </ol>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="support-ratio-dialog" class="modal">
+  <form method="dialog" class="modal-form">
+    <header class="modal-header">
+      <h2>Dependency ratio &harr; Support ratio</h2>
+      <button type="submit" class="modal-close" aria-label="Close" value="cancel">×</button>
+    </header>
+    <div class="modal-body">
+      <p>The <strong>support ratio</strong> is the inverse of the dependency ratio.</p>
+      <div class="support-formula">
+        <math display="block" xmlns="http://www.w3.org/1998/Math/MathML">
+          <mrow>
+            <mtext>Support ratio</mtext>
+            <mspace width="0.4em" />
+            <mo>=</mo>
+            <mspace width="0.4em" />
+            <mfrac>
+              <mn>100</mn>
+              <mtext>dependency ratio</mtext>
+            </mfrac>
+          </mrow>
+        </math>
+      </div>
+      <table class="support-table">
+        <thead>
+          <tr>
+            <th>Dependency&nbsp;ratio</th>
+            <th>Support&nbsp;ratio</th>
+            <th>Plain-language reading</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="band-row b-50"><td>50%</td><td>2.00</td><td>2&nbsp;workers per dependent</td></tr>
+          <tr class="band-row b-65"><td>65%</td><td>1.54</td><td>~1.5&nbsp;workers per dependent</td></tr>
+          <tr class="band-row b-80"><td>80%</td><td>1.25</td><td>1.25&nbsp;workers per dependent</td></tr>
+          <tr class="band-row b-100"><td>100%</td><td>1.00</td><td>1:1 — one&nbsp;worker per dependent</td></tr>
+          <tr class="band-row b-128"><td>120%</td><td>0.83</td><td>fewer than one worker per dependent</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The financial intuition: every retiree's pension and every child's schooling is funded —
+        directly or indirectly — by working-age contributions. A support ratio of 2.0 means each
+        worker is funding half a dependent; at 1.0 they're funding a whole one; below 1.0 each
+        worker is on the hook for more than one. That is what makes the slope of the dependency
+        ratio matter so much for fiscal policy, retirement systems, and labour markets.
+      </p>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="replacement-rate-dialog" class="modal">
+  <form method="dialog" class="modal-form">
+    <header class="modal-header">
+      <h2>Replacement rate: 2.1</h2>
+      <button type="submit" class="modal-close" aria-label="Close" value="cancel">×</button>
+    </header>
+    <div class="modal-body">
+      <p>
+        The <strong>replacement rate</strong> is the average number of children per woman needed to
+        keep a population stable across generations. The fundamental question:
+        <em>do daughters outnumber, equal, or fall short of mothers?</em>
+      </p>
+      <p>
+        The math starts at <strong>2.0</strong> — one daughter and, on average, one son per woman.
+        Two adjustments push it higher:
+      </p>
+      <ul class="replacement-list">
+        <li>
+          <strong>Sex ratio at birth.</strong> About 105 boys are born per 100 girls, so producing
+          one daughter requires ~2.05&nbsp;births.
+        </li>
+        <li>
+          <strong>Child mortality.</strong> Some girls don't survive to reproductive age, adding
+          another ~0.05.
+        </li>
+      </ul>
+      <p>
+        Result: <strong>~2.1 children per woman</strong> in low-mortality countries.
+        Historically, when child mortality was high, replacement required 4+ births per woman.
+      </p>
+      <p class="muted note">
+        Note: life expectancy doesn't enter the formula. Only survival through the childbearing
+        years matters — a woman who lives to 45 contributes the same as one who lives to 95.
+      </p>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="methodology-dialog" class="modal">
   <form method="dialog" class="modal-form">
     <header class="modal-header">
@@ -314,7 +454,7 @@
       </p>
       <ol>
         <li>Ages each cohort forward one bin, applying age-specific survival ratios interpolated to the chosen life expectancy.</li>
-        <li>Generates births = Σ (women in 5-year reproductive group × TFR × ASFR-share), with women assumed to be 49% of each cohort and shares from the chosen ASFR pattern (early/mid/late peak).</li>
+        <li>Generates births = Σ (women in 5-year reproductive group × total fertility rate × ASFR-share), with women assumed to be 49% of each cohort and shares from the chosen ASFR pattern (early/mid/late peak).</li>
         <li>Survives newborns to ages 0–4 using a birth-survival ratio also indexed by life expectancy.</li>
         <li>Adds net migrants = (total population × net-migration rate / 1000 × 5), distributed across age groups using a typical migrant age profile (peaks at 20–34).</li>
       </ol>
@@ -327,7 +467,7 @@
       <h3>Limitations</h3>
       <ul>
         <li>No sex disaggregation: combined-sex with a fixed women-share (49%). Real fertility &amp; mortality differ by sex.</li>
-        <li>Constant scenario inputs across the projection window — TFR, life expectancy, and migration rate are held fixed; UN's variants modulate these over time.</li>
+        <li>Constant scenario inputs across the projection window — total fertility rate, life expectancy, and migration rate are held fixed; UN's variants modulate these over time.</li>
         <li>Migration is exogenous and uniform per-year; surges and selectivity by skill/age beyond the standard pattern are not modeled.</li>
         <li>The standard ASFR pattern is one of three preset shapes; real countries have unique patterns.</li>
       </ul>

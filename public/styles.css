@@ -75,64 +75,204 @@ a:hover { text-decoration: underline; }
 /* ---------- Explainer ---------- */
 
 .explainer {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 24px;
-  align-items: center;
+  grid-column: 1 / -1;
   background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  padding: 22px 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px 18px;
 }
-.explainer h2 {
+.explainer > h2 {
   margin: 0 0 8px;
-  font-size: 17px;
+  font-size: 20px;
+  letter-spacing: -0.01em;
 }
-.explainer p {
-  margin: 0 0 10px;
-  font-size: 14px;
+.explainer .lead {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
 }
-.legend-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  font-size: 13px;
-}
-.legend-list li {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.legend-list .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.dot.d-young { background: var(--young); }
-.dot.d-work  { background: var(--work); }
-.dot.d-old   { background: var(--old); }
+.explainer .lead .t-dep  { color: #f97583; font-weight: 600; }
+.explainer .lead .t-work { color: #56d364; font-weight: 600; }
 
-.explainer-eq {
+.formula-card {
+  margin: 0 0 18px;
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 16px 20px;
+  padding: 18px 22px 16px;
+}
+.formula-card math[display="block"] {
+  display: block;
+  font-size: 1.45rem;
   text-align: center;
+  margin: 4px 0 14px;
 }
-.explainer-eq math[display="block"] {
-  font-size: 1.25rem;
-  margin: 4px auto;
-}
-.explainer-eq math {
+.formula-card math {
   font-size: inherit;
 }
-.eq-note {
-  margin-top: 10px;
-  font-size: 12px;
+.formula-card figcaption {
+  font-size: 13px;
   color: var(--muted);
+  line-height: 1.6;
+}
+.formula-card figcaption .var {
+  white-space: nowrap;
+}
+.formula-card figcaption math {
+  font-size: 0.95em;
+}
+.var.v-dep  math { color: #f97583; }
+.var.v-work math { color: #56d364; }
+
+.bands-title {
+  margin: 6px 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.bands-grid {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.band-card {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  position: relative;
+  overflow: hidden;
+}
+.band-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+}
+.band-card .band-key {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.band-card .band-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.band-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.band-card.b-50::before  { background: rgba(63,185,80,.65); }
+.band-card.b-65::before  { background: rgba(210,153,34,.7); }
+.band-card.b-80::before  { background: rgba(248,81,73,.75); }
+.band-card.b-128::before { background: rgba(210,84,138,.8); }
+.band-card.b-50  .band-name { color: #84d090; }
+.band-card.b-65  .band-name { color: #e1bd6f; }
+.band-card.b-80  .band-name { color: #f48a85; }
+.band-card.b-128 .band-name { color: #e497b9; }
+.band-card.b-50  { background: linear-gradient(180deg, rgba(63,185,80,.06), transparent 60%), var(--panel-2); }
+.band-card.b-65  { background: linear-gradient(180deg, rgba(210,153,34,.06), transparent 60%), var(--panel-2); }
+.band-card.b-80  { background: linear-gradient(180deg, rgba(248,81,73,.07), transparent 60%), var(--panel-2); }
+.band-card.b-128 { background: linear-gradient(180deg, rgba(210,84,138,.08), transparent 60%), var(--panel-2); }
+
+.explainer-cta {
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.link-button {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.link-button:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* ---------- Support ratio dialog ---------- */
+
+.support-formula {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0 18px;
+}
+.support-formula math[display="block"] {
+  display: block;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.support-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 16px;
+  font-size: 14px;
+}
+.support-table th,
+.support-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.support-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.support-table td:first-child,
+.support-table td:nth-child(2) {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.support-table tr.band-row td:first-child {
+  border-left: 3px solid transparent;
+  padding-left: 10px;
+}
+.support-table tr.b-50  td:first-child { border-left-color: rgba(63,185,80,.65); }
+.support-table tr.b-65  td:first-child { border-left-color: rgba(210,153,34,.7); }
+.support-table tr.b-80  td:first-child { border-left-color: rgba(248,81,73,.75); }
+.support-table tr.b-100 td:first-child { border-left-color: rgba(210,84,138,.6); }
+.support-table tr.b-128 td:first-child { border-left-color: rgba(210,84,138,.85); }
+
+/* Replacement rate dialog */
+
+.replacement-list {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+}
+.replacement-list li {
+  margin-bottom: 6px;
+}
+.modal-body p.note {
+  font-size: 13px;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+  margin-top: 16px;
 }
 
 /* ---------- Layout: sidebar + charts ---------- */
@@ -250,14 +390,16 @@ button.ghost {
   border: 1px solid var(--border);
 }
 button.preset {
-  background: var(--panel-2);
-  color: var(--text);
+  background: transparent;
+  color: var(--accent);
   border: 1px solid var(--border);
   font-weight: 500;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: border-color .15s, color .15s;
 }
-button.preset:hover { border-color: var(--accent); color: var(--accent); }
+button.preset:hover { border-color: var(--accent); color: var(--text); }
 .presets {
   display: flex;
   flex-wrap: wrap;
@@ -359,6 +501,38 @@ details.custom-data textarea {
 }
 .chart-card:first-child .chart-host { height: 460px; }
 
+/* Population overlay (top-right of pyramid) */
+.pyramid-stats {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+  text-align: right;
+  background: rgba(22, 27, 34, 0.7);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.pyramid-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.pyramid-stat-row .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.pyramid-stat-row.now .dot    { background: #58a6ff; }
+.pyramid-stat-row.future .dot { background: #f97583; }
+
 .legend-note {
   display: flex;
   flex-wrap: wrap;
@@ -410,6 +584,9 @@ dialog.modal {
   max-width: 720px;
   width: calc(100% - 40px);
   box-shadow: var(--shadow);
+}
+dialog.modal.modal-wide {
+  max-width: 940px;
 }
 dialog.modal::backdrop {
   background: rgba(13, 17, 23, 0.7);
@@ -472,8 +649,13 @@ dialog.modal::backdrop {
   }
 }
 
+@media (max-width: 900px) {
+  .bands-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 720px) {
-  .explainer { grid-template-columns: 1fr; padding: 18px 22px; }
+  .explainer { padding: 18px 22px; }
+  .formula-card math[display="block"] { font-size: 1.15rem; }
   .topnav { gap: 10px; font-size: 13px; }
   .page-section, main.layout { padding-left: 18px; padding-right: 18px; }
 }
