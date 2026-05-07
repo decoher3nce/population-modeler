@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards, replacementTfr } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "17";
+const DATA_VERSION = "20";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -35,6 +35,7 @@ const state = {
   scenarioEntity: null,
   scenarioOn: false,
   customSeed: null,      // { id, name, year, pop[] } if user uploaded
+  pyramidMode: "bar",    // "bar" | "line" — toggle on the pyramid chart card
   scenario: {
     tfr: 2.1, e0: 80, netMigPer1000: 0, asfrPattern: "mid", endYear: 2100,
     srb: 105,             // boys per 100 girls at birth
@@ -133,6 +134,7 @@ function renderScenarioEntityOptions() {
     opt.textContent = "(add an entity above first)";
     opt.value = "";
     sel.appendChild(opt);
+    refreshSyncButton();
     return;
   }
   for (const id of ids) {
@@ -145,6 +147,55 @@ function renderScenarioEntityOptions() {
   }
   if (!ids.includes(state.scenarioEntity)) state.scenarioEntity = ids[0];
   sel.value = state.scenarioEntity;
+  refreshSyncButton();
+}
+
+// Update the 'Use latest values for X' button label and disabled state to match
+// the currently-selected scenario entity. Custom-CSV seeds disable the button
+// since there's no UN data to pull from.
+function refreshSyncButton() {
+  const btn = document.getElementById("sync-to-entity");
+  const name = document.getElementById("sync-entity-name");
+  if (!btn || !name) return;
+  const id = state.scenarioEntity;
+  if (!id || id === CUSTOM_ID) {
+    btn.disabled = true;
+    name.textContent = id === CUSTOM_ID ? "custom seed" : "—";
+    return;
+  }
+  btn.disabled = false;
+  const e = ent(id);
+  name.textContent = e ? e.name : id;
+}
+
+// Snap sliders to the scenario entity's most-recent UN values, the same way
+// a 'today' snapshot preset would. Useful when the user has dialled custom
+// values for one entity and switches to another — clicking this resets the
+// sliders to that entity's 2023 baseline so they can start fresh.
+function syncSlidersToScenarioEntity() {
+  const id = state.scenarioEntity;
+  if (!id || id === CUSTOM_ID) return;
+  const tfr = latestForEntity(id, "tfr");
+  const e0 = latestForEntity(id, "e0");
+  const mig = netMigPer1000ForEntity(id);
+  applyValuesToSliders({
+    tfr, e0,
+    netMigPer1000: mig != null ? mig : 0,
+    asfrPattern: pickAsfrPatternForE0(e0),
+    srb: 105,
+    reproAgeMax: 49,
+    retirementAge: 65,
+    shock: null,
+  });
+  state.scenarioOn = true;
+  document.getElementById("scenario-on").checked = true;
+  const e = ent(id);
+  state.scenarioDescription = e
+    ? `${e.name} latest UN values — TFR ${tfr != null ? tfr.toFixed(2) : "—"}, ` +
+      `life expectancy ${e0 != null ? e0.toFixed(1) : "—"}, ` +
+      `net migration ${mig != null ? (mig >= 0 ? "+" : "") + mig.toFixed(1) : "—"}/1000.`
+    : "Snapshot of latest UN values.";
+  refreshAllCharts();
 }
 
 // ---------- baseline timeseries ----------
@@ -472,37 +523,68 @@ function makeDriverChart() {
 function makePyramidChart() {
   const ctx = document.getElementById("pyramid-chart");
   const data = buildPyramidDatasets();
+  const isLine = state.pyramidMode === "line";
+  // For line mode, augment each dataset with a faint fill below the curve so
+  // the eye still parses the area under the curve as "population at this age".
+  if (isLine) {
+    data.datasets = data.datasets.map((ds) => ({
+      ...ds,
+      borderWidth: 2,
+      pointRadius: 2.5,
+      pointHoverRadius: 4,
+      tension: 0.25,
+      fill: false,
+    }));
+  }
   state.charts.pyramid = new Chart(ctx, {
-    type: "bar",
+    type: isLine ? "line" : "bar",
     data,
     options: {
       animation: false,
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: "y",
+      // Vertical bars (or lines): age groups across the X axis, population on Y.
       plugins: {
         legend: { labels: { color: "#cdd6e0", font: { size: 11 } } },
         tooltip: {
           callbacks: {
-            label: (item) => `${item.dataset.label}: ${item.parsed.x.toFixed(2)} M`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y.toFixed(2)} M`,
           },
         },
       },
       scales: {
         x: {
+          ticks: {
+            color: "#8b949e",
+            autoSkip: false,
+            font: { size: 10 },
+            maxRotation: 60,
+            minRotation: 60,
+          },
+          grid: { color: "#21262d" },
+          title: { display: true, text: "Age group", color: "#8b949e" },
+        },
+        y: {
           ticks: { color: "#8b949e" },
           grid: { color: "#21262d" },
           title: { display: true, text: "Population (millions)", color: "#8b949e" },
         },
-        y: {
-          ticks: { color: "#8b949e", autoSkip: false, font: { size: 10 } },
-          grid: { color: "#21262d" },
-          reverse: true,
-          title: { display: true, text: "Age group", color: "#8b949e" },
-        },
       },
     },
   });
+}
+
+// Switch the pyramid chart between bar and line. Chart.js can't change `type`
+// on an existing instance, so we destroy and rebuild.
+function setPyramidMode(mode) {
+  if (mode !== "bar" && mode !== "line") return;
+  state.pyramidMode = mode;
+  document.querySelectorAll("#pyramid-mode-toggle .chart-mode-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+  if (state.charts.pyramid) state.charts.pyramid.destroy();
+  makePyramidChart();
+  refreshPyramidStats();
 }
 
 function refreshReplacementDialog() {
@@ -525,7 +607,7 @@ function refreshPyramidTitle() {
   if (id === CUSTOM_ID && state.customSeed) seedYear = state.customSeed.year;
   else if (id && state.ageSeed[id]) seedYear = state.ageSeed[id].year;
   const endYear = state.scenario.endYear;
-  el.textContent = `Population pyramid (${seedYear} vs ${endYear})`;
+  el.textContent = `Population by age (${seedYear} vs ${endYear})`;
 }
 
 function refreshAllCharts() {
@@ -875,12 +957,18 @@ function applyValuesToSliders(values) {
     (x) => Math.round(x), (v) => `${v}`);
   if (srbV != null) state.scenario.srb = srbV;
 
-  const reproV = setVal("repro-max-slider", "repro-max-val", reproAgeMax, 49, 70,
-    (x) => Math.round(x), (v) => `${v}`);
+  // Both sliders are stepped at 5 to match the model's 5-year age-group
+  // resolution. Snap to nearest 5-year boundary; clamp to slider range.
+  const snap5 = (x, lo, hi) => {
+    const snapped = Math.round(x / 5) * 5;
+    return Math.max(lo, Math.min(hi, snapped));
+  };
+  const reproV = setVal("repro-max-slider", "repro-max-val", reproAgeMax, 49, 69,
+    (x) => x === 49 ? 49 : snap5(x, 49, 69), (v) => `${v}`);
   if (reproV != null) state.scenario.reproAgeMax = reproV;
 
   const retV = setVal("retirement-slider", "retirement-val", retirementAge, 50, 95,
-    (x) => Math.round(x), (v) => `${v}`);
+    (x) => snap5(x, 50, 95), (v) => `${v}`);
   if (retV != null) state.scenario.retirementAge = retV;
 
   // Phase 2: shock event. `shock: null` explicitly disables; `undefined` leaves alone.
@@ -1117,7 +1205,16 @@ function wireEvents() {
 
   document.getElementById("scenario-entity").addEventListener("change", (e) => {
     state.scenarioEntity = e.target.value;
+    refreshSyncButton();
     refreshAllCharts();
+  });
+
+  document.getElementById("sync-to-entity").addEventListener("click", () => {
+    syncSlidersToScenarioEntity();
+  });
+
+  document.querySelectorAll("#pyramid-mode-toggle .chart-mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setPyramidMode(btn.dataset.mode));
   });
   document.getElementById("scenario-on").addEventListener("change", (e) => {
     state.scenarioOn = e.target.checked;

@@ -466,6 +466,28 @@ button.preset {
   transition: border-color .15s, color .15s;
 }
 button.preset:hover { border-color: var(--accent); color: var(--text); }
+
+/* Compact ghost button used for the 'Use latest values' sync button beneath
+   the scenario-entity dropdown. */
+button.small-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: 6px;
+  transition: border-color .15s, color .15s;
+  width: 100%;
+  margin-top: 2px;
+}
+button.small-btn:hover { border-color: var(--accent); color: var(--text); }
+button.small-btn:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+button.small-btn:disabled:hover { border-color: var(--border); color: var(--muted); }
 .presets {
   display: flex;
   flex-wrap: wrap;
@@ -561,6 +583,41 @@ details.custom-data textarea {
 }
 .chart-header .muted { font-size: 12px; }
 
+/* Inline title + mode-toggle group on the pyramid card */
+.title-with-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Segmented control for the bar/line pyramid toggle */
+.chart-options {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.chart-mode-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  transition: color .15s, background .15s;
+}
+.chart-mode-btn:last-child { border-right: 0; }
+.chart-mode-btn:hover { color: var(--text); }
+.chart-mode-btn.active {
+  background: var(--accent);
+  color: #0b1220;
+  font-weight: 600;
+}
+
 .chart-host {
   position: relative;
   height: 360px;
@@ -568,18 +625,21 @@ details.custom-data textarea {
 .chart-card:first-child .chart-host { height: 460px; }
 
 /* Info icon for custom-scenario controls.
-   Click/hover renders a tooltip via JS into document.body using fixed
-   positioning so the tooltip can escape the sidebar's overflow:auto. */
+   Hover renders a tooltip via JS into document.body using fixed positioning
+   so the tooltip can escape the sidebar's overflow:auto. The icon itself is
+   intentionally subtle — a thin grey ring that gains accent colour on hover
+   only, so it never competes visually with the slider values it annotates. */
 .info-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #0b1220;
-  font-size: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--muted);
+  font-size: 9px;
   font-weight: 700;
   font-style: italic;
   font-family: "Times New Roman", Georgia, serif;
@@ -587,6 +647,11 @@ details.custom-data textarea {
   margin: 0 4px;
   user-select: none;
   vertical-align: middle;
+  transition: color .15s, border-color .15s;
+}
+.info-icon:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .info-tooltip {
   position: fixed;
@@ -609,7 +674,7 @@ details.custom-data textarea {
 .scenario-description {
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent-2);
+  border-left: 3px solid var(--accent);
   border-radius: 6px;
   padding: 8px 12px;
   margin: 10px 0 4px;

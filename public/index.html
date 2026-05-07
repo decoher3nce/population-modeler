@@ -75,6 +75,9 @@
           <span class="info-icon" data-tip="The entity whose 2023 age structure seeds the custom-scenario projection. The dashed line on the dep-ratio chart and the right bar on the population pyramid both come from this entity.">i</span>
         </label>
         <select id="scenario-entity"></select>
+        <button id="sync-to-entity" type="button" class="ghost small-btn">
+          Use latest values for <span id="sync-entity-name">United States</span>
+        </button>
       </div>
 
       <div class="control">
@@ -148,14 +151,14 @@
       <div class="control">
         <label for="repro-max-slider">
           Reproductive age max
-          <span class="info-icon" data-tip="Upper age of the fertile window. Default 49 reflects biology. Extending it (artificial wombs, menopause delay) redistributes the same TFR across more years; ~7.5% of TFR moves to ages 50–69 when fully extended.">i</span>
+          <span class="info-icon" data-tip="Upper age of the fertile window. Default 49 reflects biology. Extending it (artificial wombs, menopause delay) redistributes the same TFR across more years; ~7.5% of TFR moves to ages 50–69 when fully extended. Snaps to 5-year boundaries to match the model's 5-year age-group resolution.">i</span>
           <span id="repro-max-val" class="val">49</span>
         </label>
-        <input id="repro-max-slider" type="range" min="49" max="70" step="1" value="49" />
+        <input id="repro-max-slider" type="range" min="49" max="69" step="5" value="49" />
         <div class="ticks ticks-positioned">
           <span class="t-start" style="left:0%">49 (biological)</span>
-          <span style="left:52.4%">60</span>
-          <span class="t-end" style="left:100%">70</span>
+          <span style="left:50%">59</span>
+          <span class="t-end" style="left:100%">69</span>
         </div>
       </div>
 
@@ -176,10 +179,10 @@
       <div class="control">
         <label for="retirement-slider">
           Retirement age threshold
-          <span class="info-icon" data-tip="Boundary between working-age denominator and old-age dependents in the dep-ratio formula. Default 65. Raise it to model 'retirement extends with longevity' — the ratio is recomputed live from the same population.">i</span>
+          <span class="info-icon" data-tip="Boundary between working-age denominator and old-age dependents in the dep-ratio formula. Default 65. Snaps to 5-year boundaries to match the model's 5-year age-group resolution — values between two boundaries produce identical dep ratios.">i</span>
           <span id="retirement-val" class="val">65</span>
         </label>
-        <input id="retirement-slider" type="range" min="50" max="95" step="1" value="65" />
+        <input id="retirement-slider" type="range" min="50" max="95" step="5" value="65" />
         <div class="ticks ticks-positioned">
           <span class="t-start" style="left:0%">50</span>
           <span style="left:33.3%">65</span>
@@ -299,8 +302,8 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3>Inputs to demography</h3>
-        <span class="muted">total fertility rate &amp; life expectancy — the two slow-moving inputs that determine the trajectory</span>
+        <h3>Fertility &amp; life expectancy over time</h3>
+        <span class="muted">the two slow-moving inputs that determine the trajectory</span>
       </div>
       <div class="chart-host">
         <canvas id="driver-chart"></canvas>
@@ -309,7 +312,13 @@
 
     <div class="chart-card">
       <div class="chart-header">
-        <h3 id="pyramid-title">Population pyramid (2023 vs 2100)</h3>
+        <div class="title-with-toggle">
+          <h3 id="pyramid-title">Population by age (2023 vs 2100)</h3>
+          <div class="chart-options" id="pyramid-mode-toggle">
+            <button class="chart-mode-btn active" type="button" data-mode="bar" title="Bar chart">Bars</button>
+            <button class="chart-mode-btn" type="button" data-mode="line" title="Line chart">Line</button>
+          </div>
+        </div>
         <span class="muted">applies to the scenario entity</span>
       </div>
       <div class="chart-host">
