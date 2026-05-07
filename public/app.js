@@ -1,7 +1,7 @@
 import { project, dependencyRatio, setStandards, replacementTfr } from "./projection.js";
 
 // Build version — bumped to bust browser caches when bundled JSON changes.
-const DATA_VERSION = "13";
+const DATA_VERSION = "14";
 
 // Distinct colour palette (10 series).
 const PALETTE = [
@@ -42,6 +42,7 @@ const state = {
     retirementAge: 65,    // working-age / old-age threshold for dependency ratio
     shock: null,          // { year, fraction } when enabled, null when disabled
   },
+  scenarioDescription: "",   // 1-2 sentence narrative shown on dep chart
   charts: { dep: null, driver: null, pyramid: null },
 };
 
@@ -545,6 +546,9 @@ function refreshAllCharts() {
   state.charts.pyramid.data.datasets = pData.datasets;
   state.charts.pyramid.update("none");
   refreshPyramidStats();
+
+  // Description box on dep chart
+  refreshScenarioDescription();
 }
 
 // ---------- presets ----------
@@ -618,93 +622,117 @@ const PRESETS = [
   // Tier 1: just slider settings.
   { type: "values", id: "spec-pronatalist", group: "Speculative & theoretical",
     label: "Pro-natalist religion ascendant",
+    description: "Pro-natalist religious or ideological movements gain mainstream traction. Sustained TFR > 3 outgrows secular populations over 2-3 generations and shifts national TFR upward via composition alone.",
     values: { tfr: 3.50, e0: 80, netMigPer1000: 0, asfrPattern: "mid" } },
   { type: "values", id: "spec-antinatalist", group: "Speculative & theoretical",
     label: "Anti-natalist movement",
+    description: "Climate anxiety, antinatalist philosophy, or 'voluntary human extinction' gain cultural traction. National TFR drops below 1.0; population enters structural decline.",
     values: { tfr: 0.80, e0: 82, netMigPer1000: 2, asfrPattern: "late" } },
   { type: "values", id: "spec-marriage-collapse", group: "Speculative & theoretical",
     label: "Marriage fragments globally",
+    description: "South Korea's TFR collapse (0.72) is largely about marriage rates, not married-couple fertility. If this pattern globalises, replacement becomes structurally unreachable without policy intervention.",
     values: { tfr: 0.70, e0: 82, netMigPer1000: 2, asfrPattern: "late" } },
   { type: "values", id: "spec-ai-companions", group: "Speculative & theoretical",
     label: "AI companions replace partnership",
+    description: "Significant fractions of young adults form primary relationships with AI rather than humans. Partnered fertility collapses to TFR ~0.5 — well below any historically observed level.",
     values: { tfr: 0.50, e0: 82, netMigPer1000: 2, asfrPattern: "late" } },
   { type: "values", id: "spec-ai-care", group: "Speculative & theoretical",
     label: "AI eldercare & childcare lift fertility",
+    description: "AI/robotic care reduces the time and cost of dependents. Removes the biggest practical barrier to family formation in developed countries; TFR lifts ~0.2-0.3 toward 2.0.",
     values: { tfr: 2.00, e0: 84, netMigPer1000: 3, asfrPattern: "late" } },
   { type: "values", id: "spec-ubi", group: "Speculative & theoretical",
     label: "UBI lifts fertility",
+    description: "Universal Basic Income removes the economic disincentive to have children. Empirically untested at scale; here we assume it nudges TFR back to a soft replacement.",
     values: { tfr: 2.40, e0: 80, netMigPer1000: 3, asfrPattern: "mid" } },
   { type: "values", id: "spec-state-collapse", group: "Speculative & theoretical",
     label: "Aging-state collapse",
+    description: "A major aging country (Japan, Italy, South Korea) hits a fiscal/care crisis. Out-migration accelerates as systems strain. TFR drops, e₀ retreats, dependency cascades.",
     values: { tfr: 0.90, e0: 70, netMigPer1000: -8, asfrPattern: "late" } },
   { type: "values", id: "spec-microplastics", group: "Speculative & theoretical",
     label: "Endocrine disruptors suppress fertility",
+    description: "Microplastics, endocrine disruptors, or novel pollutants reduce fertility further. The replacement gap widens; the rate doesn't change but achieving it gets harder.",
     values: { tfr: 1.00, e0: 79, netMigPer1000: 3, asfrPattern: "late" } },
   { type: "values", id: "spec-climate-mig", group: "Speculative & theoretical",
     label: "Climate-driven mass migration absorbed",
+    description: "Sustained migration of working-age climate refugees into aging wealthy economies — modeled here as a +30/1000 net rate every year, well above any historical norm.",
     values: { tfr: 1.60, e0: 80, netMigPer1000: 30, asfrPattern: "late" } },
   { type: "values", id: "spec-antibiotic", group: "Speculative & theoretical",
     label: "Antibiotic resistance returns",
+    description: "Antibiotic resistance returns child mortality to mid-20th-century levels. e₀ collapses to 65; replacement TFR rises toward 2.4 as more daughters die before reproducing.",
     values: { tfr: 2.40, e0: 65, netMigPer1000: 0, asfrPattern: "mid" } },
   { type: "values", id: "spec-crispr", group: "Speculative & theoretical",
     label: "CRISPR ends inheritable diseases",
+    description: "Marginal improvement in survival to reproductive age. e₀ nudges up; replacement TFR drifts toward the theoretical floor of 2.05.",
     values: { tfr: 1.60, e0: 86, netMigPer1000: 3, asfrPattern: "late" } },
   { type: "values", id: "spec-cure-cancer", group: "Speculative & theoretical",
     label: "Cure for major cancers + CVD",
+    description: "Doesn't change replacement TFR (already low pre-reproductive mortality) but devastates dependency ratios as elderly populations balloon.",
     values: { tfr: 1.60, e0: 95, netMigPer1000: 3, asfrPattern: "late" } },
   { type: "values", id: "spec-mars", group: "Speculative & theoretical",
     label: "Mars colony — harsh conditions",
+    description: "Off-world settlement with harsh conditions and small founder population. Replacement requirements push closer to pre-industrial Earth (3+) than modern (2.1).",
     values: { tfr: 4.00, e0: 60, netMigPer1000: 0, asfrPattern: "mid" } },
 
   // Phase 1 levers in play.
   { type: "values", id: "spec-sex-selection", group: "Speculative & theoretical",
     label: "Sex selection becomes universal",
+    description: "Universal sex-selective abortion or pre-implantation selection pushes SRB to 120 boys per 100 girls. Fewer mothers in next generation; replacement TFR rises mechanically.",
     values: { tfr: 1.60, e0: 80, netMigPer1000: 3, asfrPattern: "late", srb: 120 } },
   { type: "values", id: "spec-wombs", group: "Speculative & theoretical",
     label: "Artificial wombs decouple fertility",
+    description: "Ectogenesis removes the biological time pressure on female childbearing. Reproductive age extends to 65; TFR can sustain at 2.5 without career trade-offs.",
     values: { tfr: 2.50, e0: 84, netMigPer1000: 3, asfrPattern: "late", reproAgeMax: 65 } },
   { type: "values", id: "spec-genetic-longevity", group: "Speculative & theoretical",
     label: "Genetic-engineered longevity (e₀ 110, retire at 80)",
+    description: "Genetic engineering for longevity extends life expectancy to 110. Society adjusts retirement to 80, keeping the working-age denominator viable.",
     values: { tfr: 1.80, e0: 110, netMigPer1000: 3, asfrPattern: "late",
               retirementAge: 80, reproAgeMax: 55 } },
   { type: "values", id: "spec-radical-longevity", group: "Speculative & theoretical",
     label: "Radical life extension (e₀ 130, retire at 90)",
+    description: "Radical life extension to 130 years. Without retirement age moving with longevity, dependency would balloon; this scenario assumes work life extends to 90.",
     values: { tfr: 1.60, e0: 130, netMigPer1000: 3, asfrPattern: "late",
               retirementAge: 90, reproAgeMax: 60 } },
 
   // Phase 2: shock-event scenarios. Each pairs a one-shot population change
   // with sustained background rates that reflect the post-event environment.
-  // Negative fraction = population gain (annexation, refugee absorption).
+  // Sign convention: positive fraction = gain, negative fraction = loss.
   // The `target` field restricts the shock to a specific age band so it visibly
   // moves the dependency ratio (uniform shocks leave it unchanged).
   { type: "values", id: "spec-pandemic", group: "Speculative & theoretical",
     label: "Working-age pandemic (8% loss, 2030)",
+    description: "A novel pathogen with high mortality concentrated in working-age adults — unlike COVID's elderly skew. The productive base shrinks while dependents are spared, cracking the dependency ratio open.",
     values: { tfr: 1.60, e0: 75, netMigPer1000: 1, asfrPattern: "late",
-              shock: { year: 2030, fraction: 0.08, target: "working" } } },
+              shock: { year: 2030, fraction: -0.08, target: "working" } } },
   { type: "values", id: "spec-wwiii", group: "Speculative & theoretical",
     label: "Major war / WWIII (12% working-age loss, 2030)",
+    description: "Global conventional war removes 12% of working-age adults. Historically wars depress fertility for a generation; the bounce-back in non-devastated countries follows but the dep ratio takes a step up.",
     values: { tfr: 1.40, e0: 72, netMigPer1000: 0, asfrPattern: "late",
-              shock: { year: 2030, fraction: 0.12, target: "working" } } },
+              shock: { year: 2030, fraction: -0.12, target: "working" } } },
   { type: "values", id: "spec-nuclear", group: "Speculative & theoretical",
     label: "Regional nuclear exchange (12% all-age loss, 2035)",
+    description: "Limited regional nuclear exchange. Beyond direct mortality, radiation effects on fertility and birth defects sustain elevated mortality (e₀ 65) for decades.",
     values: { tfr: 1.30, e0: 65, netMigPer1000: -2, asfrPattern: "mid",
-              shock: { year: 2035, fraction: 0.12, target: "all" } } },
+              shock: { year: 2035, fraction: -0.12, target: "all" } } },
   { type: "values", id: "spec-bioweapon", group: "Speculative & theoretical",
     label: "Bioweapon release (10% working-age loss, 2030)",
+    description: "Engineered pathogen targeting working-age populations. The dep-ratio impact is sharp because the working denominator shrinks while dependents are largely spared.",
     values: { tfr: 1.40, e0: 70, netMigPer1000: 0, asfrPattern: "late",
-              shock: { year: 2030, fraction: 0.10, target: "working" } } },
+              shock: { year: 2030, fraction: -0.10, target: "working" } } },
   { type: "values", id: "spec-asteroid", group: "Speculative & theoretical",
     label: "Asteroid / supervolcano (25% all-age loss, 2050)",
+    description: "Civilization-scale impact event. A 25% population bottleneck across all ages resets demographic dynamics; humanity has been here before — the Toba bottleneck ~70k years ago.",
     values: { tfr: 1.60, e0: 60, netMigPer1000: 0, asfrPattern: "mid",
-              shock: { year: 2050, fraction: 0.25, target: "all" } } },
+              shock: { year: 2050, fraction: -0.25, target: "all" } } },
   { type: "values", id: "spec-mass-migration", group: "Speculative & theoretical",
     label: "Mass refugee absorption (+15% working-age, 2030)",
+    description: "Climate-driven mass migration absorbed by aging wealthy economies. Working-age refugees enter the dependency-ratio denominator directly — rebalancing demographics globally even if politically explosive.",
     values: { tfr: 1.80, e0: 80, netMigPer1000: 5, asfrPattern: "late",
-              shock: { year: 2030, fraction: -0.15, target: "working" } } },
+              shock: { year: 2030, fraction: 0.15, target: "working" } } },
   { type: "values", id: "spec-annexation", group: "Speculative & theoretical",
     label: "Country annexation / merger (+25% all-age, 2030)",
+    description: "Sudden population merger via annexation or political union. Total population jumps; the absorbed nation's age structure mixes into the host's pyramid.",
     values: { tfr: 1.80, e0: 80, netMigPer1000: 3, asfrPattern: "late",
-              shock: { year: 2030, fraction: -0.25, target: "all" } } },
+              shock: { year: 2030, fraction: 0.25, target: "all" } } },
 
   // Reset
   { type: "reset",  id: "reset", group: "—", label: "Reset to United States today" },
@@ -882,6 +910,38 @@ function applyValuesToSliders(values) {
   }
 }
 
+function describePreset(preset, applied = {}) {
+  if (preset.description) return preset.description;
+  const { entity } = preset;
+  if (preset.type === "snapshot") {
+    const tfr = applied.tfr ?? "—";
+    const e0 = applied.e0 ?? "—";
+    const mig = applied.netMigPer1000 ?? "—";
+    return `${entity} latest UN values — TFR ${typeof tfr === "number" ? tfr.toFixed(2) : tfr}, life expectancy ${typeof e0 === "number" ? e0.toFixed(1) : e0}, net migration ${typeof mig === "number" ? (mig >= 0 ? "+" : "") + mig.toFixed(1) : mig}/1000.`;
+  }
+  if (preset.type === "historical") {
+    return `${entity} ${preset.year} — UN-recorded fertility, life expectancy, and net migration applied as constant rates from 2023 forward.`;
+  }
+  if (preset.type === "values") {
+    return "Custom-rate scenario.";
+  }
+  if (preset.type === "reset") {
+    return "Reset — United States latest known values, no shock event.";
+  }
+  return "";
+}
+
+function refreshScenarioDescription() {
+  const el = document.getElementById("scenario-description");
+  if (!el) return;
+  if (state.scenarioOn && state.scenarioDescription) {
+    el.textContent = state.scenarioDescription;
+    el.style.display = "block";
+  } else {
+    el.style.display = "none";
+  }
+}
+
 function applyPreset(id) {
   const preset = PRESETS.find((p) => p.id === id);
   if (!preset) return;
@@ -907,29 +967,33 @@ function applyPreset(id) {
     shock: null,
   };
 
+  let appliedValues = null;
   if (preset.type === "snapshot") {
     switchEntity(preset.entity);
     const tfr = latestForEntity(preset.entity, "tfr");
     const e0 = latestForEntity(preset.entity, "e0");
     const mig = netMigPer1000ForEntity(preset.entity);
-    applyValuesToSliders({
+    appliedValues = {
       tfr, e0,
       netMigPer1000: mig != null ? mig : 0,
       asfrPattern: pickAsfrPatternForE0(e0),
       ...defaultLevers,
-    });
+    };
+    applyValuesToSliders(appliedValues);
   } else if (preset.type === "historical") {
     switchEntity(preset.entity);
     const v = valuesAt(preset.entity, preset.year);
-    applyValuesToSliders({
+    appliedValues = {
       tfr: v.tfr,
       e0: v.e0,
       netMigPer1000: v.netMigPer1000 ?? 0,
       asfrPattern: pickAsfrPatternForE0(v.e0),
       ...defaultLevers,
-    });
+    };
+    applyValuesToSliders(appliedValues);
   } else if (preset.type === "values") {
-    applyValuesToSliders({ ...defaultLevers, ...preset.values });
+    appliedValues = { ...defaultLevers, ...preset.values };
+    applyValuesToSliders(appliedValues);
   } else if (preset.type === "reset") {
     state.selected = ["United States"].filter((eid) => state.entities.some((e) => e.id === eid));
     if (state.selected.length === 0) state.selected = state.featured.slice(0, 1);
@@ -950,6 +1014,8 @@ function applyPreset(id) {
   // Always show the scenario after a preset is applied
   state.scenarioOn = true;
   document.getElementById("scenario-on").checked = true;
+
+  state.scenarioDescription = describePreset(preset, appliedValues || {});
 
   refreshAllCharts();
 }
@@ -1106,6 +1172,13 @@ function wireEvents() {
     // Keep the replacement-rate dialog's live readout in sync if it happens to be open
     refreshReplacementDialog();
   }
+
+  // When the user adjusts any slider directly, the scenario is no longer a named
+  // preset — surface that to the description box.
+  function markCustomEdit() {
+    state.scenarioDescription = "Custom scenario — manually adjusted sliders.";
+    refreshScenarioDescription();
+  }
   [tfr, e0, mig, pat, endYear, srb, reproMax, retirement,
    shockOn, shockYear, shockFraction, shockTarget].forEach((el) =>
     el.addEventListener("input", syncSliders)
@@ -1143,15 +1216,17 @@ function wireEvents() {
     document.getElementById("custom-csv").value = text;
   });
 
-  // Auto-enable scenario when sliders change for the first time
-  [tfr, e0, mig, pat, srb, reproMax, retirement].forEach((el) => {
+  // Auto-enable scenario when sliders change for the first time, and mark
+  // the scenario as a custom edit (description box switches off the preset blurb).
+  [tfr, e0, mig, pat, srb, reproMax, retirement,
+   shockOn, shockYear, shockFraction, shockTarget].forEach((el) => {
     el.addEventListener("input", () => {
       const cb = document.getElementById("scenario-on");
       if (!cb.checked) {
         cb.checked = true;
         state.scenarioOn = true;
-        refreshAllCharts();
       }
+      markCustomEdit();
     });
   });
 }

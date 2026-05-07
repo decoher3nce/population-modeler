@@ -195,19 +195,29 @@ export function project(seedPop, seedYear, endYear, scenario) {
     return true;
   };
 
-  // Step in 5-year periods. Stop before overshooting endYear so the final
-  // data point is the last 5-year step that lies on or before endYear
-  // (e.g. with seedYear=2023 and endYear=2100, the last year is 2098, not 2103).
-  while (year + 5 <= endYear) {
+  // Step in 5-year periods. Normal stop: when the next step would carry past
+  // endYear. Exception: if an unfired shock falls inside the [year, year+5)
+  // window we're about to skip AND the shock year is itself within the user's
+  // projection window, take that one extra step so the shock actually applies.
+  // This keeps "endYear=2100, no shock" landing at 2098 (matching the earlier
+  // off-by-five-year fix) while letting "endYear=2050, shock at 2050" still
+  // fire — without that, the loop exited before 2050 was ever reached.
+  while (true) {
+    const wouldOvershoot = year + 5 > endYear;
+    const shockInThisStep = shock && !shockApplied
+      && shock.year >= year && shock.year < year + 5
+      && shock.year <= endYear;
+    if (wouldOvershoot && !shockInThisStep) break;
+
     // Apply one-shot shock at the start of the 5-year period that contains it.
-    // shock.fraction is signed: positive = loss (e.g. 0.10 = 10% loss),
-    // negative = gain (e.g. -0.20 = 20% population increase from migration/annexation).
-    // shock.target restricts the multiplier to a subset of age groups so age-skewed
-    // events (working-age pandemic, working-age refugee influx) actually move the
-    // dependency ratio rather than just scaling everyone uniformly.
-    if (shock && !shockApplied && shock.year >= year && shock.year < year + 5) {
+    // shock.fraction is signed: positive = gain (e.g. +0.20 = 20% population
+    // increase from migration/annexation), negative = loss (e.g. -0.10 = 10%
+    // loss). shock.target restricts the multiplier to a subset of age groups
+    // so age-skewed events (working-age pandemic, working-age refugee influx)
+    // actually move the dependency ratio rather than just scaling uniformly.
+    if (shockInThisStep) {
       const fraction = Math.max(-0.4, Math.min(0.4, shock.fraction || 0));
-      const factor = 1 - fraction;
+      const factor = 1 + fraction;
       const target = shock.target || "all";
       if (fraction !== 0) {
         pop = pop.map((p, i) => (inShockTarget(i, target) ? p * factor : p));
